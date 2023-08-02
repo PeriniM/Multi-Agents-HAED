@@ -5,10 +5,7 @@ from Classes.Environment import Environment
 env = Environment()
 env.importCSV('Rooms/createGrid().csv')
 
-# Create and add agents, shapes, and anchors to the environment
-
+# Create and add agents to the environment
+env.duplicateAgents(2)
 # Update the plot and simulate the environment
-while True:
-    env.updatePlot(type='ideal')
-    env.updatePlot(type='real')
-    plt.pause(0.01)
+env.simulate(0.01)

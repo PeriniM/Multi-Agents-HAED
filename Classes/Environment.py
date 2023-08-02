@@ -75,17 +75,21 @@ class Environment:
     
     def multilaterationUWB(self, agent, distances):
         result = minimize(self.cost_function, [agent.x_real, agent.y_real], args=(self.anchors, distances, np.ones(len(distances))), method='Nelder-Mead')
-        return result.x[0], result.x[1]
+        return np.array([result.x[0], result.x[1]])
     
     def cost_function(self, initial_guess, anchors, distances, weights):
         eq = []
         for i in range(len(distances)):
             eq.append((np.sqrt((anchors[i].x - initial_guess[0])**2 + (anchors[i].y - initial_guess[1])**2) - distances[i])*weights[i])
         return np.sum(np.array(eq)**2)
+    
+    def duplicateAgents(self, num_agents):
+        for i in range(num_agents):
+            self.agents.append(Agent(self.agents[0].x, self.agents[0].y))
+            self.agents_real_CoM.append(self.agents[0].getRealCoM())
 
-    def updatePlot(self, type='ideal'):
-        
-        if type == 'ideal':
+    def simulate(self, dt):
+        while True:
             # Clear the axes and redraw the environment of the first plot
             self.axes[0].cla()
             self.axes[0].set_title('Ideal Environment')
@@ -104,8 +108,7 @@ class Environment:
             # Draw the anchors
             for anchor in self.anchors:
                 self.axes[0].plot(anchor.x, anchor.y, 'o', markersize=4, markerfacecolor='r', markeredgecolor='r')
-
-        elif type == 'real':
+        
             # Clear the axes and redraw the environment of the second plot
             self.axes[1].cla()
             self.axes[1].set_title('Real Environment')
@@ -118,15 +121,28 @@ class Environment:
             for anchor in self.anchors:
                 self.axes[1].plot(anchor.x, anchor.y, 'o', markersize=4, markerfacecolor='r', markeredgecolor='r')
 
-            # multilateration
+            # for each agent
             for agent in self.agents:
+                # ------------------ CALCULATIONS ------------------
+
+                # UWB MULTILATERATION
                 # get the distances from the anchors
                 distances = []
                 for anchor in self.anchors:
-                    distances.append(anchor.getDistance([agent.x_real, agent.y_real]))
+                    if agent.CoM_estim is None:
+                        distances.append(anchor.getDistance([agent.x_real, agent.y_real]))
+                    else:
+                        distances.append(anchor.getDistance(agent.CoM_estim))
                 # get the coordinates of the agent
-                agent.x_estim, agent.y_estim = self.multilaterationUWB(agent, distances)
+                agent.CoM_estim = self.multilaterationUWB(agent, distances)
+                # ------------------ DYNAMICS ------------------
+                # update the dynamics of the agent
+                agent.updateDynamics(dt)
+
+                # ------------------ PLOTTING ------------------
                 # draw the estimates CoM of the agent
-                self.axes[1].plot(agent.x_estim, agent.y_estim, 'o', markersize=4, markerfacecolor='b', markeredgecolor='b')
+                self.axes[1].plot(agent.CoM_estim[0], agent.CoM_estim[1], 'o', markersize=4, markerfacecolor='b', markeredgecolor='b')
+            plt.pause(dt)
+
     def getFigureAndAxes(self):
         return self.fig, self.axes

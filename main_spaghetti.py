@@ -33,29 +33,42 @@ def cost_function(initial_guess, anchors, distances, weights):
 
 # Function to calculate the intersection point between two segments
 def segment_intersection(p1, p2, p3, p4):
-    '''
-    p1: first point of the first segment
-    p2: second point of the first segment
-    p3: first point of the second segment
-    p4: second point of the second segment
-    '''
-    # Calculate the denominator
-    denominator = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0])
-    # Check if the denominator is not zero
-    if denominator != 0:
-        # Calculate the x coordinate of the intersection point
-        x = ((p1[0] * p2[1] - p1[1] * p2[0]) * (p3[0] - p4[0]) - (p1[0] - p2[0]) * (p3[0] * p4[1] - p3[1] * p4[0])) / denominator
-        # Calculate the y coordinate of the intersection point
-        y = ((p1[0] * p2[1] - p1[1] * p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] * p4[1] - p3[1] * p4[0])) / denominator
-        # Check if the intersection point is inside the segments
-        if min(p1[0], p2[0]) <= x <= max(p1[0], p2[0]) and min(p1[1], p2[1]) <= y <= max(p1[1], p2[1]) and min(p3[0], p4[0]) <= x <= max(p3[0], p4[0]) and min(p3[1], p4[1]) <= y <= max(p3[1], p4[1]):
-            return np.array([x, y])
-    return None
+    def orientation(p, q, r):
+        val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+        if val == 0:
+            return 0
+        return 1 if val > 0 else 2
     
-
+    def on_segment(p, q, r):
+        return (q[0] <= max(p[0], r[0]) and q[0] >= min(p[0], r[0]) and
+                q[1] <= max(p[1], r[1]) and q[1] >= min(p[1], r[1]))
+    
+    denominator = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0])
+    
+    o1 = orientation(p1, p2, p3)
+    o2 = orientation(p1, p2, p4)
+    o3 = orientation(p3, p4, p1)
+    o4 = orientation(p3, p4, p2)
+    
+    if o1 != o2 and o3 != o4:
+        return np.array([
+            ((p1[0] * p2[1] - p1[1] * p2[0]) * (p3[0] - p4[0]) - (p1[0] - p2[0]) * (p3[0] * p4[1] - p3[1] * p4[0])) / denominator,
+            ((p1[0] * p2[1] - p1[1] * p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] * p4[1] - p3[1] * p4[0])) / denominator
+        ])
+    
+    if o1 == 0 and on_segment(p1, p3, p2):
+        return p3
+    if o2 == 0 and on_segment(p1, p4, p2):
+        return p4
+    if o3 == 0 and on_segment(p3, p1, p4):
+        return p1
+    if o4 == 0 and on_segment(p3, p2, p4):
+        return p2
+    
+    return None
 
 # Lidar scan using ray casting algorithm
-def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_range=10):
+def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_range=20):
     '''
     estim_pos: estimated position of the robot [x_CoM, y_CoM]
     estim_orientation: estimated orientation of the robot [angle]
@@ -66,6 +79,7 @@ def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_
     # Initialize the lidar scan
     raycast_distances = np.zeros(resolution)
     raycast_angles = np.linspace(0, 2 * np.pi, resolution)
+    isIntersected = np.zeros(resolution)
     # Initialize the intersection point to None
     intersection_point = None
 
@@ -92,12 +106,13 @@ def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_
                         intersection_point = intersection_candidate
         # Update the lidar scan
         raycast_distances[i] = min_distance if intersection_point is not None else max_range
-
-    return raycast_distances, raycast_angles + estim_orientation
+        if raycast_distances[i] < max_range:
+            isIntersected[i] = 1
+    return raycast_distances, raycast_angles + estim_orientation, isIntersected
         
 
 # Import the CSV containing the shapes
-df = pd.read_csv('Rooms/createGrid().csv', header=None, skiprows=1, na_values=['NA', 'na'])
+df = pd.read_csv('Rooms/dungeon.csv', header=None, skiprows=1, na_values=['NA', 'na'])
 shape = []
 x_max = -1e5
 y_max = -1e5
@@ -226,8 +241,8 @@ for i in range(len(map_real_vert)):
     
 # Add the anchors to the plot
 for i in range(len(anchors)):
-    ax1.plot(anchors[i][0], anchors[i][1], 'o', markersize=8, markerfacecolor='r', markeredgecolor='r')
-    ax2.plot(anchors[i][0], anchors[i][1], 'o', markersize=8, markerfacecolor='r', markeredgecolor='r')
+    ax1.plot(anchors[i][0], anchors[i][1], 'o', markersize=2, markerfacecolor='r', markeredgecolor='r')
+    ax2.plot(anchors[i][0], anchors[i][1], 'o', markersize=2, markerfacecolor='r', markeredgecolor='r')
 
 # Plot the agent as a Polygon
 h_agent = Polygon(agent_vertices, edgecolor='blue', facecolor='blue', alpha=0.7)
@@ -265,6 +280,8 @@ estimate_robot_position = []
 # plot the estimated robot position
 h_estimate_robot_position, = ax2.plot([], [], 'go', markersize=1)
 
+occupancy_points = []
+h_occupancy_points, = ax2.plot([], [], 'ko', markersize=1)
 
 # ----- SIMULATION ----- #
 counter = 0
@@ -311,7 +328,7 @@ while True:
         mag_orientation = 2 * np.pi - mag_orientation
 
     # Get lidar scan distances and angles
-    lidar_scan_distances, lidar_scan_angles = lidar_scan(CoM_estim, mag_orientation, map_real_vert)
+    lidar_scan_distances, lidar_scan_angles, lidar_scan_intersected = lidar_scan(CoM_estim, mag_orientation, map_real_vert)
 
 
     # every 10 iterations append the real and estimated robot position
@@ -322,6 +339,14 @@ while True:
     # ----- UPDATE THE GRAPHICS ----- #
     # Plot the lidar scan
     h_lidar_scan.set_data(lidar_scan_distances * np.cos(lidar_scan_angles) + CoM_estim[0], lidar_scan_distances * np.sin(lidar_scan_angles) + CoM_estim[1])
+    # append the lidar scan points to the occupancy pointsm only if the ray intersects with an obstacle
+    for i in range(len(lidar_scan_intersected)):
+        if lidar_scan_intersected[i] == 1:
+            occupancy_points.append([lidar_scan_distances[i] * np.cos(lidar_scan_angles[i]) + CoM_estim[0], lidar_scan_distances[i] * np.sin(lidar_scan_angles[i]) + CoM_estim[1]])
+    
+    # Plot the occupancy points
+    if len(occupancy_points) > 0:
+        h_occupancy_points.set_data(np.array(occupancy_points).T[0], np.array(occupancy_points).T[1])
     # ----- UPDATE THE GRAPHICS ----- #
 
     # Update the graphics object for the robot's center of mass

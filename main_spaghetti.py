@@ -339,10 +339,12 @@ while True:
     # ----- UPDATE THE GRAPHICS ----- #
     # Plot the lidar scan
     h_lidar_scan.set_data(lidar_scan_distances * np.cos(lidar_scan_angles) + CoM_estim[0], lidar_scan_distances * np.sin(lidar_scan_angles) + CoM_estim[1])
-    # append the lidar scan points to the occupancy pointsm only if the ray intersects with an obstacle
+    # append the lidar scan points to the occupancy points only if the ray intersects with an obstacle
     for i in range(len(lidar_scan_intersected)):
         if lidar_scan_intersected[i] == 1:
-            occupancy_points.append([lidar_scan_distances[i] * np.cos(lidar_scan_angles[i]) + CoM_estim[0], lidar_scan_distances[i] * np.sin(lidar_scan_angles[i]) + CoM_estim[1]])
+            # if the point is not already in the occupancy points, append it
+            if [lidar_scan_distances[i] * np.cos(lidar_scan_angles[i]) + CoM_estim[0], lidar_scan_distances[i] * np.sin(lidar_scan_angles[i]) + CoM_estim[1]] not in occupancy_points:
+                occupancy_points.append([lidar_scan_distances[i] * np.cos(lidar_scan_angles[i]) + CoM_estim[0], lidar_scan_distances[i] * np.sin(lidar_scan_angles[i]) + CoM_estim[1]])
     
     # Plot the occupancy points
     if len(occupancy_points) > 0:
@@ -353,8 +355,8 @@ while True:
     h_CoM.set_data([x_CoM], [y_CoM])  # Wrap x_CoM and y_CoM with lists
 
     # Update the graphics connecting the robot's estimated position to all the anchors
-    for i in range(len(anchors)):
-        h_CoM_estim[i].set_data([CoM_estim[0], anchors[i][0]], [CoM_estim[1], anchors[i][1]])
+    # for i in range(len(anchors)):
+    #     h_CoM_estim[i].set_data([CoM_estim[0], anchors[i][0]], [CoM_estim[1], anchors[i][1]])
     # Update the graphics object for the robot's estimated position
     h_CoM_estim_point.set_data([CoM_estim[0]], [CoM_estim[1]])
     # Update the graphics object for the robot's real north

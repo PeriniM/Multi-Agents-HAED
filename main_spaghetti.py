@@ -68,7 +68,7 @@ def segment_intersection(p1, p2, p3, p4):
     return None
 
 # Lidar scan using ray casting algorithm
-def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_range=20):
+def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_range=10):
     '''
     estim_pos: estimated position of the robot [x_CoM, y_CoM]
     estim_orientation: estimated orientation of the robot [angle]
@@ -370,4 +370,3 @@ while True:
     h_estimate_robot_position.set_data(np.array(estimate_robot_position).T[0], np.array(estimate_robot_position).T[1])
     # Pause for a short time to simulate real-time behavior
     plt.pause(dt)
-

@@ -2,13 +2,22 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.animation import FuncAnimation
+import matplotlib.cm as cm
+
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import unary_union
 from itertools import product
-import matplotlib.cm as cm
+
 from sklearn.cluster import KMeans
 from python_tsp.heuristics import solve_tsp_simulated_annealing
+import warnings
+import time
+
+# Suppress FutureWarning and RuntimeWarning
+warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=RuntimeWarning)
 
 def importCSV(filename):
     df = pd.read_csv(filename, header=None, skiprows=1)
@@ -77,8 +86,10 @@ def generate_voronoi_within_room(room_shape, n_points=1000):
             points.append([x, y])
     
     points = np.array(points)
+    print(f"Generating Voronoi with {len(points)} points...")
+    prev_time = time.time()
     vor = Voronoi(points)
-    
+    print(f"{round((time.time() - prev_time)*1000, 3)} ms")
     # Convert the room shape to a Shapely Polygon
     room_polygon = Polygon(zip(room_shape[0], room_shape[1]))
 
@@ -92,8 +103,7 @@ def generate_voronoi_within_room(room_shape, n_points=1000):
             if intersection.geom_type == "LineString":
                 clipped_ridges.append(intersection)
             elif intersection.geom_type == "MultiLineString":
-                for segment in intersection:
-                    clipped_ridges.append(segment)
+                clipped_ridges.extend(list(intersection.geoms))
     
     return vor, clipped_ridges
 
@@ -115,7 +125,10 @@ def divide_areas_using_kmeans(vor, room_shape, n_robots):
                 region_polygons.append(region_polygon)
                 
     # Cluster the centroids using K-means
+    print(f"Dividing {len(centroids)} voronoi cells among {n_robots} robots...")
+    prev_time = time.time()
     kmeans = KMeans(n_clusters=n_robots).fit(centroids)
+    print(f"{round((time.time() - prev_time)*1000, 3)} ms")
     labels = kmeans.labels_
 
     robot_assignments = [[] for _ in range(n_robots)]
@@ -123,6 +136,10 @@ def divide_areas_using_kmeans(vor, room_shape, n_robots):
         robot_assignments[labels[i]].append(region)
 
     return robot_assignments
+
+def are_neighbors(region1, region2):
+    shared_boundary = region1.boundary.intersection(region2.boundary)
+    return shared_boundary.length > 0
 
 def compute_tsp_path_for_region(regions):
     centroids = [region.centroid.coords[0] for region in regions]
@@ -132,28 +149,37 @@ def compute_tsp_path_for_region(regions):
 
     for i in range(num_points):
         for j in range(num_points):
-            distance_matrix[i][j] = Point(centroids[i]).distance(Point(centroids[j]))
+            distance = Point(centroids[i]).distance(Point(centroids[j]))
+            if i != j:
+                if are_neighbors(regions[i], regions[j]):
+                    distance *= 0.5  # Decrease the distance for neighboring cells to prioritize them
+                else:
+                    distance *= 1e5  # Increase the distance for non-neighboring cells to deprioritize them
+            distance_matrix[i][j] = distance
 
     # Solve the TSP problem
+    print(f"Computing TSP path for {num_points} voronoi cells...")
+    prev_time = time.time()
     permutation, _ = solve_tsp_simulated_annealing(distance_matrix)
-
+    print(f"{round((time.time() - prev_time)*1000, 3)} ms")
     # Get the ordered centroid coordinates based on the TSP path
     ordered_centroids = [centroids[i] for i in permutation]
     
     return ordered_centroids
 
+
 if __name__ == "__main__":
-    filename = 'Rooms/dungeon.csv'
+    filename = 'Rooms/createGrid().csv'
     shapes = importCSV(filename)
     
     # Extract the room shape
     room_shape = [shape for shape in shapes if shape[2] == "room"][0]
 
     # Get the Voronoi object and the clipped ridges
-    vor, clipped_ridges = generate_voronoi_within_room(room_shape, 250)
-    
+    vor, clipped_ridges = generate_voronoi_within_room(room_shape, 300)
+
     # Use K-means to split the Voronoi regions among robots
-    n_robots = 2  # change this as per your needs
+    n_robots = 4  # change this as per your needs
     robot_assignments = divide_areas_using_kmeans(vor, room_shape, n_robots)
     
     fig, ax = plt.subplots()
@@ -162,8 +188,14 @@ if __name__ == "__main__":
     colors = cm.rainbow(np.linspace(0, 1, len(robot_assignments)))
     for i, regions in enumerate(robot_assignments):
         for region in regions:
-            x, y = region.exterior.xy
-            ax.fill(x, y, color=colors[i], alpha=0.5)
+            # Check if the region is a MultiPolygon
+            if region.geom_type == 'MultiPolygon':
+                for sub_region in region.geoms:
+                    x, y = sub_region.exterior.xy
+                    ax.fill(x, y, color=colors[i], alpha=0.5)
+            else:
+                x, y = region.exterior.xy
+                ax.fill(x, y, color=colors[i], alpha=0.5)
     
     # Compute TSP paths for each robot assignment and plot
     for i, regions in enumerate(robot_assignments):

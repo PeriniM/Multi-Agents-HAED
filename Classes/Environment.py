@@ -8,7 +8,8 @@ from Classes.Shapes import Room, Obstacle, Agent
 from Classes.Sensors import UWBAnchor
 
 class Environment:
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self.agents = []
         self.room = None
         self.obstacles = []
@@ -17,9 +18,10 @@ class Environment:
         self.map_real_vert = []
         self.agents_real_CoM = []
         self.fig, self.axes = plt.subplots(nrows=2, ncols=1)
-
-    def importCSV(self, filename):
-        df = pd.read_csv(filename, header=None, skiprows=1, na_values=['NA', 'na'])
+        self.importCSV()
+        
+    def importCSV(self):
+        df = pd.read_csv(self.filename, header=None, skiprows=1, na_values=['NA', 'na'])
       
         for i in range(len(df)):
             x = np.fromstring(df.iloc[i, 1], sep=' ')
@@ -146,3 +148,4 @@ class Environment:
 
     def getFigureAndAxes(self):
         return self.fig, self.axes
+    

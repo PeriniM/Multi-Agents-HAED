@@ -1,11 +1,20 @@
+from Classes2.Environment import Environment
 import matplotlib.pyplot as plt
-from Classes.Environment import Environment
 
-# Example usage
-env = Environment()
-env.importCSV('Rooms/createGrid().csv')
+num_agents = 5
+env = Environment('Rooms/dungeon.csv')
+env.createAgents(num_agents)
+env.createVoronoiTessellation(250)
+env.assignRobots()
 
-# Create and add agents to the environment
-env.duplicateAgents(2)
-# Update the plot and simulate the environment
-env.simulate(0.01)
+# create a figure with 4 subplots
+fig, axes = plt.subplots(nrows=2, ncols=2)
+fig.tight_layout()
+
+env.plotRoom(axes[0, 0])
+env.plotVoronoiTessellation(axes[0, 1])
+env.plotAgentAssignments(axes[0, 1])
+env.plotAgentAssignmentsAndPaths(axes[1, 0])
+
+# start the simulation
+env.simulate(axes[1, 1], dt=0.1)

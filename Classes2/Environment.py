@@ -6,7 +6,7 @@ from matplotlib.patches import Polygon
 
 from Classes2.Shapes import Room, Obstacle
 from Classes2.Agent import Agent
-from Classes2.Sensors import UWBAnchor
+from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer
 from Classes2.VoronoiHandler import VoronoiHandler
 from Classes2.RobotAssigner import RobotAssigner
 
@@ -60,8 +60,8 @@ class Environment:
                 self.room = Room(self.shapes_coord[i][0], self.shapes_coord[i][1])
     
                 # add UWB anchors to the vertices of the room
-                for j in range(len(self.room.x)):
-                    self.addUWBAnchor(self.room.x[j], self.room.y[j])
+                for j in range(len(self.room.vertex_x)):
+                    self.addUWBAnchor(self.room.vertex_x[j], self.room.vertex_y[j])
 
             elif self.shapes_coord[i][2] == 'obstacle':
                 obstacle = Obstacle(self.shapes_coord[i][0], self.shapes_coord[i][1])
@@ -79,11 +79,11 @@ class Environment:
         return anchor
     
     def createVoronoiTessellation(self, num_points=300):
-        self.vh = VoronoiHandler([self.room.x, self.room.y])
+        self.vh = VoronoiHandler([self.room.vertex_x, self.room.vertex_y])
         self.vh.generate_voronoi_within_room(num_points)
     
     def assignRobots(self):
-        self.ra = RobotAssigner(self.vh.vor, [self.room.x, self.room.y], len(self.agents))
+        self.ra = RobotAssigner(self.vh.vor, [self.room.vertex_x, self.room.vertex_y], len(self.agents))
         self.ra.divide_areas_using_kmeans()
         self.region_paths = self.ra.compute_tsp_paths()
 
@@ -100,7 +100,7 @@ class Environment:
     def createAgents(self, num_agents):
         if num_agents > 1:
             for i in range(num_agents-1):
-                self.agents.append(Agent(self.agents[0].x, self.agents[0].y))
+                self.agents.append(Agent(self.agents[0].vertex_x, self.agents[0].vertex_y))
 
     def plotRoom(self, ax):
         ax.set_title('Room')
@@ -108,9 +108,9 @@ class Environment:
         ax.set_ylabel('y (m)')
         ax.set_aspect('equal', adjustable='box')
         ax.grid(True, which='both', linestyle='dotted')
-        ax.plot(self.room.x, self.room.y, 'k', linewidth=1)
+        ax.plot(self.room.vertex_x, self.room.vertex_y, 'k', linewidth=1)
         for obstacle in self.room.obstacles:
-            ax.plot(obstacle.x, obstacle.y, 'k', linewidth=1)
+            ax.plot(obstacle.vertex_x, obstacle.vertex_y, 'k', linewidth=1)
         for anchor in self.anchors:
             ax.plot(anchor.x, anchor.y, 'o', markersize=4, markerfacecolor='r', markeredgecolor='r')
     
@@ -150,7 +150,7 @@ class Environment:
         for i in range(len(self.region_paths)):
             ax.plot(self.region_paths[i][0], self.region_paths[i][1], marker='o', markersize=2, linewidth=1, color='C'+str(i), label=f"Robot {i}")
         # plot room boundary
-        ax.plot(self.room.x, self.room.y, color="k", linewidth=1, label="Room")
+        ax.plot(self.room.vertex_x, self.room.vertex_y, color="k", linewidth=1, label="Room")
 
     def simulate(self, ax, dt=0.1):
         k=0
@@ -163,13 +163,12 @@ class Environment:
                 if k >= len(self.region_paths[i][0]):
                     break
                 # place the agent at the beginning of the tsp path
-                initalCoM = np.array([self.region_paths[i][0][k], self.region_paths[i][1][k]])
-                
-                # move the coordinates of the agent 
-                self.agents[i].x = initalCoM[0] + self.agents[i].x_ideal - self.agents[i].CoM_ideal[0]
-                self.agents[i].y = initalCoM[1] + self.agents[i].y_ideal - self.agents[i].CoM_ideal[1]
+                inital_position = np.array([self.region_paths[i][0][k], self.region_paths[i][1][k]])
+                self.agents[i].x = inital_position[0]
+                self.agents[i].y = inital_position[1]
+
                 # plot the agent
-                ax.add_patch(Polygon(np.array([self.agents[i].x, self.agents[i].y]).T, color='C'+str(i), alpha=0.5))
+                ax.add_patch(Polygon(self.agents[i].getVertices(), color='C'+str(i), alpha=0.5))
             k=k+1
             # if window is closed, then stop the simulation
             if not plt.fignum_exists(ax.get_figure().number):

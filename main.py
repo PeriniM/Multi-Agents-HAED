@@ -1,7 +1,7 @@
 from Classes2.Environment import Environment
 import matplotlib.pyplot as plt
 
-num_agents = 5
+num_agents = 7
 env = Environment('Rooms/dungeon.csv')
 env.createAgents(num_agents)
 env.createVoronoiTessellation(250)

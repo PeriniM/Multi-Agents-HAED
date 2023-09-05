@@ -6,7 +6,7 @@ from matplotlib.patches import Polygon
 
 from Classes2.Shapes import Room, Obstacle
 from Classes2.Agent import Agent
-from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer
+from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, DepthSensor
 from Classes2.VoronoiHandler import VoronoiHandler
 from Classes2.RobotAssigner import RobotAssigner
 
@@ -17,6 +17,8 @@ class Environment:
         self.room = None
         self.anchors = []
         self.shapes_coord = []
+        # create variable to store ideal map of the environment
+        self.ideal_map = []
         self.importCSV()
         # create a VoronoiHandler object
         self.vh = None
@@ -24,6 +26,7 @@ class Environment:
         self.ra = None
         # create variables to save regions and paths
         self.region_paths = []
+        
         # create handles for the figure and axes
         self.fig, self.axes = None, None
         
@@ -58,7 +61,7 @@ class Environment:
 
             if self.shapes_coord[i][2] == 'room':
                 self.room = Room(self.shapes_coord[i][0], self.shapes_coord[i][1])
-    
+                self.ideal_map.append(self.room.getLines())
                 # add UWB anchors to the vertices of the room
                 for j in range(len(self.room.vertex_x)):
                     self.addUWBAnchor(self.room.vertex_x[j], self.room.vertex_y[j])
@@ -66,6 +69,7 @@ class Environment:
             elif self.shapes_coord[i][2] == 'obstacle':
                 obstacle = Obstacle(self.shapes_coord[i][0], self.shapes_coord[i][1])
                 self.room.addObstacle(obstacle)
+                self.ideal_map.append(obstacle.getLines())
 
             elif self.shapes_coord[i][2] == 'agent':
                 agent = Agent(self.shapes_coord[i][0], self.shapes_coord[i][1])
@@ -86,6 +90,9 @@ class Environment:
         self.ra = RobotAssigner(self.vh.vor, [self.room.vertex_x, self.room.vertex_y], len(self.agents))
         self.ra.divide_areas_using_kmeans()
         self.region_paths = self.ra.compute_tsp_paths()
+        # assign the paths to the agents
+        for i in range(len(self.agents)):
+            self.agents[i].target_points = [self.region_paths[i][0], self.region_paths[i][1]]
 
     def multilaterationUWB(self, agent, distances):
         result = minimize(self.cost_function, [agent.x_real, agent.y_real], args=(self.anchors, distances, np.ones(len(distances))), method='Nelder-Mead')
@@ -101,7 +108,65 @@ class Environment:
         if num_agents > 1:
             for i in range(num_agents-1):
                 self.agents.append(Agent(self.agents[0].vertex_x, self.agents[0].vertex_y))
+    
+    def initializeAgentSensors(self):
+        for agent in self.agents:
+            left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 1080, noise_std_dev=0.1)
+            right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 1080, noise_std_dev=0.1)
+            agent.initialize_sensors([left_encoder, right_encoder])
 
+    def simulate(self, ax, dt=0.1):
+
+        # Initialize each agent's position to the starting point of its path
+        for agent in self.agents:
+            agent.x, agent.y = agent.target_points[0][0], agent.target_points[1][0]
+            agent.theta = 0  # optionally reset orientation if needed
+
+        while True:
+            # Clear the axes and redraw the environment of the first plot
+            ax.cla()
+            self.plotRoom(ax)
+
+            for idx, agent in enumerate(self.agents):
+                # Only update the agent's position if there are remaining points in its path
+                if len(agent.target_points[0]) > 1:
+                    target = [agent.target_points[0][1], agent.target_points[1][1]]
+
+                    # Proportional controller to reach the target
+                    error_x = target[0] - agent.x
+                    error_y = target[1] - agent.y
+                    angle_to_target = np.arctan2(error_y, error_x)
+                    angle_diff = angle_to_target - agent.theta
+
+                    # Simplistic controller
+                    if np.abs(angle_diff) > 0.1:
+                        left_speed = agent.speed * (1 - angle_diff)
+                        right_speed = agent.speed * (1 + angle_diff)
+                    else:
+                        left_speed = agent.speed
+                        right_speed = agent.speed
+
+                    agent.move(left_speed, right_speed, dt)
+
+                    # Plotting the path for the agent
+                    ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
+                    
+                    # Plotting the current position of the agent
+                    ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
+
+                    # If the agent reached the current target, remove this target from its path
+                    if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 0.1:
+                        agent.target_points[0].pop(0)
+                        agent.target_points[1].pop(0)
+
+            # If window is closed, then stop the simulation
+            if not plt.fignum_exists(ax.get_figure().number):
+                return
+
+            plt.pause(dt)
+
+
+    
     def plotRoom(self, ax):
         ax.set_title('Room')
         ax.set_xlabel('x (m)')
@@ -151,27 +216,3 @@ class Environment:
             ax.plot(self.region_paths[i][0], self.region_paths[i][1], marker='o', markersize=2, linewidth=1, color='C'+str(i), label=f"Robot {i}")
         # plot room boundary
         ax.plot(self.room.vertex_x, self.room.vertex_y, color="k", linewidth=1, label="Room")
-
-    def simulate(self, ax, dt=0.1):
-        k=0
-        while True:
-            # Clear the axes and redraw the environment of the first plot
-            ax.cla()
-            self.plotRoom(ax)
-            # Draw the agents as polygons
-            for i in range(len(self.agents)):
-                if k >= len(self.region_paths[i][0]):
-                    break
-                # place the agent at the beginning of the tsp path
-                inital_position = np.array([self.region_paths[i][0][k], self.region_paths[i][1][k]])
-                self.agents[i].x = inital_position[0]
-                self.agents[i].y = inital_position[1]
-
-                # plot the agent
-                ax.add_patch(Polygon(self.agents[i].getVertices(), color='C'+str(i), alpha=0.5))
-            k=k+1
-            # if window is closed, then stop the simulation
-            if not plt.fignum_exists(ax.get_figure().number):
-                break
-            plt.pause(dt)
-    

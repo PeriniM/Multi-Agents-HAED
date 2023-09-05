@@ -6,6 +6,7 @@ env = Environment('Rooms/dungeon.csv')
 env.createAgents(num_agents)
 env.createVoronoiTessellation(250)
 env.assignRobots()
+env.initializeAgentSensors()
 
 # create a figure with 4 subplots
 fig, axes = plt.subplots(nrows=2, ncols=2)

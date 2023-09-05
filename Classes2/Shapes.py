@@ -13,6 +13,9 @@ class Shape():
 
     def getVertices(self):
         return np.array([self.vertex_x, self.vertex_y]).T 
+    
+    def getLines(self):
+        return np.array([self.vertex_x[:-1], self.vertex_y[:-1], self.vertex_x[1:], self.vertex_y[1:]]).T
 
 class Room(Shape):
     def __init__(self, vertex_x, vertex_y):

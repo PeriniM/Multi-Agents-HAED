@@ -111,11 +111,13 @@ class Environment:
     
     def initializeAgentSensors(self):
         for agent in self.agents:
-            left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 1080, noise_std_dev=0.1)
-            right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 1080, noise_std_dev=0.1)
+            left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 720, noise_std_dev=0.1)
+            right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 720, noise_std_dev=0.1)
             agent.initialize_sensors([left_encoder, right_encoder])
 
     def simulate(self, ax, dt=0.1):
+
+        SPEED = 2  # Define a constant speed
 
         # Initialize each agent's position to the starting point of its path
         for agent in self.agents:
@@ -140,11 +142,11 @@ class Environment:
 
                     # Simplistic controller
                     if np.abs(angle_diff) > 0.1:
-                        left_speed = agent.speed * (1 - angle_diff)
-                        right_speed = agent.speed * (1 + angle_diff)
+                        left_speed = SPEED * (1 - angle_diff)
+                        right_speed = SPEED * (1 + angle_diff)
                     else:
-                        left_speed = agent.speed
-                        right_speed = agent.speed
+                        left_speed = SPEED
+                        right_speed = SPEED
 
                     agent.move(left_speed, right_speed, dt)
 

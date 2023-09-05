@@ -9,15 +9,14 @@ class Agent(Shape):
         self.x = np.mean(vertex_x)
         self.y = np.mean(vertex_y)
         self.theta = 0
-        self.speed = 5
 
         # set wheels distance as the minimum distance between the middle point and the closest vertex
         self.wheels_distance = np.min(np.sqrt((self.x - vertex_x)**2 + (self.y - vertex_y)**2))
         self.wheel_radius = self.wheels_distance / 2
 
         self.dynamics = "differential"
-        self.sensors = {}
-
+        self.sensors = {}   
+        
         # Iniitialize the target points of the path to follow 
         self.target_points = None
         self.scanned_map = []
@@ -69,7 +68,7 @@ class Agent(Shape):
                 sensor.update(self.x, self.y)
             elif sensor.sensor_type == "LiDAR" or sensor.sensor_type == "StereoCamera" and ideal_map is not None:
                 sensor.update(self, self.x, self.y, self.theta, ideal_map)
-    
+
     def get_sensor_data(self, sensor_name):
         # For encoders, you can retrieve data as:
         # agent.get_sensor_data("Encoder_left")

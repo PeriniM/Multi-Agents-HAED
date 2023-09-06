@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from matplotlib.patches import Polygon
 
-from Classes2.Shapes import Room, Obstacle
-from Classes2.Agent import Agent
-from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, DepthSensor
-from Classes2.VoronoiHandler import VoronoiHandler
-from Classes2.RobotAssigner import RobotAssigner
+from Classes.Shapes import Room, Obstacle
+from Classes.Agent import Agent
+from Classes.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, DepthSensor
+from Classes.VoronoiHandler import VoronoiHandler
+from Classes.RobotAssigner import RobotAssigner
 
 class Environment:
     def __init__(self, filename):

@@ -1,4 +1,4 @@
-from Classes2.Environment import Environment
+from Classes.Environment import Environment
 import matplotlib.pyplot as plt
 
 num_agents = 6

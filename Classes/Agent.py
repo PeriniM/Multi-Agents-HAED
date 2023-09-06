@@ -1,5 +1,5 @@
 import numpy as np
-from Classes2.Shapes import Shape
+from Classes.Shapes import Shape
 
 class Agent(Shape):
     def __init__(self, vertex_x, vertex_y):

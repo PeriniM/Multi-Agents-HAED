@@ -9,14 +9,32 @@ class Agent(Shape):
         self.x = np.mean(vertex_x)
         self.y = np.mean(vertex_y)
         self.theta = 0
+        self.v = 0
+        self.omega = 0
+
+        # set max speed and angular velocity
+        self.max_v = 5
+        self.max_omega = 5
 
         # set wheels distance as the minimum distance between the middle point and the closest vertex
         self.wheels_distance = np.min(np.sqrt((self.x - vertex_x)**2 + (self.y - vertex_y)**2))
         self.wheel_radius = self.wheels_distance / 2
 
         self.dynamics = "differential"
-        self.sensors = {}   
-        
+        self.sensors = {}
+
+        self.estim_pos_uwb = None
+        self.estim_pos_encoders = None
+
+        self.estim_v_uwb = None
+        self.estim_v_encoders = None
+
+        self.estim_omega_uwb = None
+        self.estim_omega_encoders = None
+
+        self.estim_theta_uwb = None
+        self.estim_theta_encoders = None
+
         # Iniitialize the target points of the path to follow 
         self.target_points = None
         self.scanned_map = []
@@ -35,7 +53,7 @@ class Agent(Shape):
                 key += "_left" if "Encoder_left" not in self.sensors else "_right"
             self.sensors[key] = sensor
     
-    def move(self, left_speed, right_speed, dt, ideal_map=None):
+    def move(self, left_speed, right_speed, dt):
         # Update the agent's pose
         if self.dynamics == "differential":
             # Calculate the new pose
@@ -46,28 +64,6 @@ class Agent(Shape):
             self.theta += delta_theta
         else:
             raise ValueError("Unknown dynamics type: {}".format(self.dynamics))
-        
-        # Update all sensors
-        for sensor in self.sensors.values():
-            if sensor.sensor_type == "EncoderLeft":
-                sensor.update(self.wheel_radius, left_speed, dt)
-            elif sensor.sensor_type == "EncoderRight":
-                sensor.update(self.wheel_radius, right_speed, dt)
-            elif sensor.sensor_type == "Gyroscope":
-                # Update with the angular velocity, which is delta_theta/dt
-                sensor.update((right_speed - left_speed) / self.wheels_distance)
-            elif sensor.sensor_type == "Accelerometer":
-                # Update with the linear acceleration
-                # This is a simplified example; consider using a more accurate model.
-                delta_v = 0.5 * (right_speed - left_speed)
-                sensor.update([delta_v/dt, 0])
-            elif sensor.sensor_type == "Magnetometer":
-                # Update with a "true" magnetic field value
-                sensor.update([np.cos(self.theta), np.sin(self.theta)])
-            elif sensor.sensor_type == "UWBAnchor":
-                sensor.update(self.x, self.y)
-            elif sensor.sensor_type == "LiDAR" or sensor.sensor_type == "StereoCamera" and ideal_map is not None:
-                sensor.update(self, self.x, self.y, self.theta, ideal_map)
 
     def get_sensor_data(self, sensor_name):
         # For encoders, you can retrieve data as:

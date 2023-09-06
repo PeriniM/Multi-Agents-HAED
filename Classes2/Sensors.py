@@ -70,7 +70,7 @@ class Magnetometer(Sensor):
     def get_data(self):
         return self.magnetic_field
     
-class DepthSensor(Sensor):
+class LiDAR(Sensor):
     def __init__(self, x, y, sensor_type, max_range, num_beams, fov_degrees, noise_std_dev=0.1):
         super().__init__(x, y, sensor_type, noise_std_dev)
         self.max_range = max_range
@@ -103,14 +103,14 @@ class DepthSensor(Sensor):
             x3, y3, x4, y4 = segment
             det = (x4 - x3) * (y2 - y1) - (x2 - x1) * (y4 - y3)
             
-            if det == 0:  # lines are parallel, no intersection
+            if np.any(det == 0):  # lines are parallel, no intersection
                 continue
             
             alpha = ((x1 - x3) * (y4 - y3) - (y1 - y3) * (x4 - x3)) / det
             beta = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / det
             
             # check if intersection lies within both segments
-            if 0 <= alpha <= 1 and 0 <= beta <= 1:
+            if np.all((0 <= alpha) & (alpha <= 1)) and np.all((0 <= beta) & (beta <= 1)):
                 xi = x1 + alpha * (x2 - x1)
                 yi = y1 + alpha * (y2 - y1)
                 distance = np.sqrt((xi - x1)**2 + (yi - y1)**2)
@@ -118,7 +118,15 @@ class DepthSensor(Sensor):
                     min_distance = distance
                 
         return min_distance
-
+    
+    def convert_to_cartesian(self, distances, robot_x, robot_y, robot_theta):
+        cartesian_coords = []
+        for i, distance in enumerate(distances):
+            angle = self.beam_angles[i] + robot_theta
+            x = robot_x + distance * np.cos(angle)
+            y = robot_y + distance * np.sin(angle)
+            cartesian_coords.append((x, y))
+        return cartesian_coords
 
     def get_data(self):
         return self.readings

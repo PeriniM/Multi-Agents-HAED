@@ -66,8 +66,5 @@ class Agent(Shape):
             raise ValueError("Unknown dynamics type: {}".format(self.dynamics))
 
     def get_sensor_data(self, sensor_name):
-        # For encoders, you can retrieve data as:
-        # agent.get_sensor_data("Encoder_left")
-        # agent.get_sensor_data("Encoder_right")
         return self.sensors[sensor_name].get_data()
         

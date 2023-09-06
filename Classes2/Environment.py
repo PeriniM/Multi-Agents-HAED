@@ -113,8 +113,8 @@ class Environment:
         for agent in self.agents:
             sensor_list = []
             if 'Encoders' in sensors:
-                left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 720, noise_std_dev=0)
-                right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 720, noise_std_dev=0)
+                left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 720, noise_std_dev=0.2)
+                right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 720, noise_std_dev=0.2)
                 sensor_list.append(left_encoder)
                 sensor_list.append(right_encoder)
             if 'Gyroscope' in sensors:
@@ -127,7 +127,7 @@ class Environment:
                 magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0)
                 sensor_list.append(magnetometer)
             if 'Lidar' in sensors:
-                lidar = DepthSensor(agent.x, agent.y, "Lidar", 3, 90, 360, noise_std_dev=0)
+                lidar = DepthSensor(agent.x, agent.y, "Lidar", 10, 90, 360, noise_std_dev=0.2)
                 sensor_list.append(lidar)
             if 'StereoCamera' in sensors:
                 stereo_camera = DepthSensor(agent.x, agent.y, "StereoCamera", 3, 240, 120, noise_std_dev=0)
@@ -159,92 +159,101 @@ class Environment:
             agent.x, agent.y = agent.target_points[0][0], agent.target_points[1][0]
             agent.theta = 0  # optionally reset orientation if needed
             # add a different noise to each agent
-            self.addRandomNoise(agent, activate=True)
+            self.addRandomNoise(agent, activate=False)
 
         while True:
             # Clear the axes and redraw the environment of the first plot
             ax.cla()
             self.plotSimEnv(ax)
             for idx, agent in enumerate(self.agents):
-                # Only update the agent's position if there are remaining points in its path
                 if len(agent.target_points[0]) > 1:
                     target = [agent.target_points[0][1], agent.target_points[1][1]]
 
-                    #-----------------SENSORS-----------------
-                    # UWB MULTILATERATION
-                    self.anchors_distances = []
-                    for anchor in self.anchors:
-                        anchor.update(agent.x, agent.y)
-                        self.anchors_distances.append(anchor.get_data())
-                    # Update agent's position using multilateration
-                    agent.estim_pos_uwb = self.multilaterationUWB(agent, self.anchors_distances)
-                    agent.estim_v_uwb = np.array([agent.estim_pos_uwb[0] - agent.x, agent.estim_pos_uwb[1] - agent.y]) / dt
-                    agent.estim_theta_uwb = np.arctan2(agent.estim_pos_uwb[1] - agent.y, agent.estim_pos_uwb[0] - agent.x)
-                    agent.estim_omega_uwb = (agent.estim_theta_uwb - agent.theta) / dt
-            
-                    # ENCODERS
-                    # Update encoder data for left and right wheels
-                    agent.sensors["EncoderLeft"].update(agent.wheel_radius, agent.v - agent.omega * agent.wheels_distance / 2, dt)
-                    agent.sensors["EncoderRight"].update(agent.wheel_radius, agent.v + agent.omega * agent.wheels_distance / 2, dt)
-                    # Estimate angular displacement and update encoders-based estimations
-                    delta_theta_left = agent.get_sensor_data("EncoderLeft") / agent.sensors["EncoderLeft"].ticks_per_revolution * 2 * np.pi
-                    delta_theta_right = agent.get_sensor_data("EncoderRight") / agent.sensors["EncoderRight"].ticks_per_revolution * 2 * np.pi
-                    delta_theta = 0.5 * (delta_theta_right + delta_theta_left)
-                    delta_s = agent.wheel_radius * delta_theta
-                    delta_x = delta_s * np.cos(agent.theta + 0.5 * delta_theta)
-                    delta_y = delta_s * np.sin(agent.theta + 0.5 * delta_theta)
-                    # Calculate estimated position using encoder data
-                    agent.estim_pos_encoders = np.array([agent.x + delta_x, agent.y + delta_y])
-                    agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
-                    agent.estim_omega_encoders = delta_theta / dt
-                    agent.estim_theta_encoders = agent.theta + delta_theta
+                #-----------------SENSORS-----------------
+                # UWB MULTILATERATION
+                self.anchors_distances = []
+                for anchor in self.anchors:
+                    anchor.update(agent.x, agent.y)
+                    self.anchors_distances.append(anchor.get_data())
+                # Update agent's position using multilateration
+                agent.estim_pos_uwb = self.multilaterationUWB(agent, self.anchors_distances)
+                agent.estim_v_uwb = np.array([agent.estim_pos_uwb[0] - agent.x, agent.estim_pos_uwb[1] - agent.y]) / dt
+                agent.estim_theta_uwb = np.arctan2(agent.estim_pos_uwb[1] - agent.y, agent.estim_pos_uwb[0] - agent.x)
+                agent.estim_omega_uwb = (agent.estim_theta_uwb - agent.theta) / dt
+        
+                # ENCODERS
+                # Update encoder data for left and right wheels
+                agent.sensors["EncoderLeft"].update(agent.wheel_radius, agent.v - agent.omega * agent.wheels_distance / 2, dt)
+                agent.sensors["EncoderRight"].update(agent.wheel_radius, agent.v + agent.omega * agent.wheels_distance / 2, dt)
+                # Estimate angular displacement and update encoders-based estimations
+                delta_theta_left = agent.get_sensor_data("EncoderLeft") / agent.sensors["EncoderLeft"].ticks_per_revolution * 2 * np.pi
+                delta_theta_right = agent.get_sensor_data("EncoderRight") / agent.sensors["EncoderRight"].ticks_per_revolution * 2 * np.pi
+                delta_theta = 0.5 * (delta_theta_right + delta_theta_left)
+                delta_s = agent.wheel_radius * delta_theta
+                delta_x = delta_s * np.cos(agent.theta + 0.5 * delta_theta)
+                delta_y = delta_s * np.sin(agent.theta + 0.5 * delta_theta)
+                # Calculate estimated position using encoder data
+                agent.estim_pos_encoders = np.array([agent.x + delta_x, agent.y + delta_y])
+                agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
+                agent.estim_omega_encoders = delta_theta / dt
+                agent.estim_theta_encoders = agent.theta + delta_theta
 
-                    # LIDAR
-                    # Update lidar data
-                    agent.sensors["Lidar"].update(agent.x, agent.y, agent.theta, self.ideal_map)
-                    # Convert LiDAR distances to cartesian coordinates
-                    lidar_cartesian = agent.sensors["Lidar"].convert_to_cartesian(agent.x, agent.y, agent.theta)
+                # LIDAR
+                # Update lidar data
+                agent.sensors["Lidar"].update(agent.x, agent.y, agent.theta, self.ideal_map)
+                # Convert LiDAR distances to cartesian coordinates
+                lidar_cartesian = agent.sensors["Lidar"].convert_to_cartesian(agent.x, agent.y, agent.theta)
+                # Update the scanned map
+                for i in agent.sensors["Lidar"].obstacles_idx:
+                    agent.scanned_map.append(lidar_cartesian[i])
 
-                    # STEREO CAMERA
-                    # Update stereo camera data
-                    agent.sensors["StereoCamera"].update(agent.x, agent.y, agent.theta, self.ideal_map)
-                    # Convert stereo camera distances to cartesian coordinates
-                    stereo_camera_cartesian = agent.sensors["StereoCamera"].convert_to_cartesian(agent.x, agent.y, agent.theta)
-                    
-                    #-----------------ESTIMATION-----------------
-                    # TODO: Implement state estimation here
-                    
-                    #-----------------MOTION PLANNING-----------------                
-                    # TODO: Implement motion planning here
+                # STEREO CAMERA
+                # Update stereo camera data
+                agent.sensors["StereoCamera"].update(agent.x, agent.y, agent.theta, self.ideal_map)
+                # Convert stereo camera distances to cartesian coordinates
+                stereo_camera_cartesian = agent.sensors["StereoCamera"].convert_to_cartesian(agent.x, agent.y, agent.theta)
+                # Update the scanned map
+                for i in agent.sensors["StereoCamera"].obstacles_idx:
+                    agent.scanned_map.append(stereo_camera_cartesian[i])
+                
+                #-----------------ESTIMATION-----------------
+                # TODO: Implement state estimation here
+                
+                #-----------------MOTION PLANNING-----------------                
+                # TODO: Implement motion planning here
 
-                    #-----------------MOTION CONTROL-----------------
-                    # Update the agent's position
-                    #agent.move(left_speed, right_speed, dt)
-                    # move the agent randomly
-                    agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
-                    
-                    #-----------------PLOTS-----------------
-                    # Plotting the path for the agent
-                    ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
-                    # Plotting the current position of the agent
-                    ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
-                    # Plot the agent's orientation using a line
-                    ax.plot([agent.x, agent.x + 1 * np.cos(agent.theta)], [agent.y, agent.y + 1 * np.sin(agent.theta)], color='r', alpha=1, linewidth=1)
-                    # Plotting the estimated position of the agent with UWB
-                    ax.plot(agent.estim_pos_uwb[0], agent.estim_pos_uwb[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
-                    # Plotting the estimated position of the agent with encoders
-                    ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
-                    # Plot LiDAR points around the agent's position
-                    lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
-                    ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
-                    # Plot stereo camera points around the agent's position
-                    stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
-                    ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                #-----------------MOTION CONTROL-----------------
+                # Update the agent's position
+                #agent.move(left_speed, right_speed, dt)
+                # move the agent randomly
+                agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
+                #agent.x, agent.y = target[0], target[1]
 
-                    # If the agent reached the current target, remove this target from its path
-                    if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 0.1:
-                        agent.target_points[0].pop(0)
-                        agent.target_points[1].pop(0)
+                #-----------------PLOTS-----------------
+                # Plotting the path for the agent
+                # ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
+                # Plotting the current position of the agent
+                ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
+                # Plot the agent's orientation using a line
+                ax.plot([agent.x, agent.x + 1 * np.cos(agent.theta)], [agent.y, agent.y + 1 * np.sin(agent.theta)], color='r', alpha=1, linewidth=1)
+                # Plotting the estimated position of the agent with UWB
+                ax.plot(agent.estim_pos_uwb[0], agent.estim_pos_uwb[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
+                # Plotting the estimated position of the agent with encoders
+                ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
+                # Plot LiDAR points around the agent's position
+                # lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
+                # ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                # Plot stereo camera points around the agent's position
+                # stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
+                # ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                # Plot the scanned map
+                if len(agent.scanned_map) > 0:
+                    scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)
+                    ax.scatter(scanned_map_x_coords, scanned_map_y_coords, color='C' + str(idx), marker='o', alpha=1, s=0.5)
+                # If the agent reached the current target, remove this target from its path
+                if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 0.1 and len(agent.target_points[0]) > 1:
+                    agent.target_points[0].pop(0)
+                    agent.target_points[1].pop(0)
 
             # If window is closed, then stop the simulation
             if not plt.fignum_exists(ax.get_figure().number):

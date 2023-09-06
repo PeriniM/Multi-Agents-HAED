@@ -78,8 +78,10 @@ class DepthSensor(Sensor):
         self.fov = np.deg2rad(fov_degrees)  # Convert FOV to radians
         self.beam_angles = np.linspace(-self.fov/2, self.fov/2, num_beams)
         self.readings = np.zeros(num_beams)
+        self.obstacles_idx = []
 
     def update(self, agent_x, agent_y, agent_theta, ideal_map):
+        self.obstacles_idx = []
         for i, angle in enumerate(self.beam_angles):
             dx = self.max_range * np.cos(agent_theta + angle)
             dy = self.max_range * np.sin(agent_theta + angle)
@@ -92,7 +94,9 @@ class DepthSensor(Sensor):
             min_distance = self._check_intersection(agent_x, agent_y, end_x, end_y, ideal_map)
             if min_distance is None:  # No obstacle detected within max_range
                 min_distance = self.max_range
-            
+            else:
+                self.obstacles_idx.append(i)
+
             # Apply noise if specified
             noise = np.random.normal(0, self.noise_std_dev) if self.noise_std_dev > 0 else 0
             self.readings[i] = min_distance + noise
@@ -130,8 +134,6 @@ class DepthSensor(Sensor):
                 if min_distance is None or distance < min_distance:
                     min_distance = distance
         return min_distance
-
-
     
     def convert_to_cartesian(self, robot_x, robot_y, robot_theta):
         cartesian_coords = []
@@ -141,6 +143,8 @@ class DepthSensor(Sensor):
             y = robot_y + distance * np.sin(angle)
             cartesian_coords.append((x, y))
         return cartesian_coords
-
+    
     def get_data(self):
         return self.readings
+    
+

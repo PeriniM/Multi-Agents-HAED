@@ -88,7 +88,7 @@ class Environment:
                 raise ValueError(f"Unknown element type: {element_type}")
         
     def addUWBAnchor(self, x, y):
-        anchor = UWBAnchor(x, y, noise_std_dev=0)
+        anchor = UWBAnchor(x, y, noise_std_dev=0.1)
         self.anchors.append(anchor)
         return anchor
     
@@ -134,13 +134,14 @@ class Environment:
                 sensor_list.append(stereo_camera)
             agent.initialize_sensors(sensor_list)
 
-    def addRandomNoise(self, agent, activate=False):
-        if activate:
+    def addSensorNoise(self, agent, noise=0.1, random=False):
+        if random:
             for sensor in agent.sensors.values():
                 sensor.noise_std_dev = np.random.uniform(0, 0.1)
         else:
             for sensor in agent.sensors.values():
-                sensor.noise_std_dev = 0
+                if noise:
+                    sensor.noise_std_dev = noise
 
     def multilaterationUWB(self, agent, distances):
         result = minimize(self.cost_function, [agent.x, agent.y], args=(self.anchors, distances, np.ones(len(distances))), method='Nelder-Mead')
@@ -159,7 +160,8 @@ class Environment:
             agent.x, agent.y = agent.target_points[0][0], agent.target_points[1][0]
             agent.theta = 0  # optionally reset orientation if needed
             # add a different noise to each agent
-            self.addRandomNoise(agent, activate=False)
+            # to keep the original noise use addSensorNoise(agent)
+            self.addSensorNoise(agent, noise=0.1, random=False)
 
         while True:
             # Clear the axes and redraw the environment of the first plot
@@ -177,9 +179,6 @@ class Environment:
                     self.anchors_distances.append(anchor.get_data())
                 # Update agent's position using multilateration
                 agent.estim_pos_uwb = self.multilaterationUWB(agent, self.anchors_distances)
-                agent.estim_v_uwb = np.array([agent.estim_pos_uwb[0] - agent.x, agent.estim_pos_uwb[1] - agent.y]) / dt
-                agent.estim_theta_uwb = np.arctan2(agent.estim_pos_uwb[1] - agent.y, agent.estim_pos_uwb[0] - agent.x)
-                agent.estim_omega_uwb = (agent.estim_theta_uwb - agent.theta) / dt
         
                 # ENCODERS
                 # Update encoder data for left and right wheels
@@ -193,10 +192,28 @@ class Environment:
                 delta_x = delta_s * np.cos(agent.theta + 0.5 * delta_theta)
                 delta_y = delta_s * np.sin(agent.theta + 0.5 * delta_theta)
                 # Calculate estimated position using encoder data
-                agent.estim_pos_encoders = np.array([agent.x + delta_x, agent.y + delta_y])
                 agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
                 agent.estim_omega_encoders = delta_theta / dt
-                agent.estim_theta_encoders = agent.theta + delta_theta
+
+                # EKF Implementation
+                agent.initialize_ekf(agent.sensors["EncoderLeft"].noise_std_dev, self.anchors[0].noise_std_dev)
+                # 1. EKF Predict
+                # Use the already computed predicted states for prediction
+                agent.ekf.predict()
+
+                # 2. EKF Update using measurements
+                # Form the measurement vector
+                z = np.array([
+                    agent.estim_pos_uwb[0], 
+                    agent.estim_pos_uwb[1], 
+                    agent.estim_v_encoders[0], 
+                    agent.estim_v_encoders[1]
+                ])
+
+                agent.ekf.update(z=z, HJacobian=agent.HJacobian_at, Hx=agent.Hx_at)
+
+                # Update agent's state using EKF estimates
+                agent.x, agent.y, agent.v, agent.omega = agent.ekf.x_post
 
                 # LIDAR
                 # Update lidar data
@@ -216,9 +233,6 @@ class Environment:
                 for i in agent.sensors["StereoCamera"].obstacles_idx:
                     agent.scanned_map.append(stereo_camera_cartesian[i])
                 
-                #-----------------ESTIMATION-----------------
-                # TODO: Implement state estimation here
-                
                 #-----------------MOTION PLANNING-----------------                
                 # TODO: Implement motion planning here
 
@@ -237,9 +251,9 @@ class Environment:
                 # Plot the agent's orientation using a line
                 ax.plot([agent.x, agent.x + 1 * np.cos(agent.theta)], [agent.y, agent.y + 1 * np.sin(agent.theta)], color='r', alpha=1, linewidth=1)
                 # Plotting the estimated position of the agent with UWB
-                ax.plot(agent.estim_pos_uwb[0], agent.estim_pos_uwb[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
+                # ax.plot(agent.estim_pos_uwb[0], agent.estim_pos_uwb[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
                 # Plotting the estimated position of the agent with encoders
-                ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
+                # ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
                 # Plot LiDAR points around the agent's position
                 # lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
                 # ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)

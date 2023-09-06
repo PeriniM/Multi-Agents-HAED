@@ -1,5 +1,6 @@
 import numpy as np
 from Classes.Shapes import Shape
+from Classes.AgentEKF import AgentEKF
 
 class Agent(Shape):
     def __init__(self, vertex_x, vertex_y):
@@ -22,6 +23,9 @@ class Agent(Shape):
 
         self.dynamics = "differential"
         self.sensors = {}
+
+        # Initialize the Extended Kalman Filter for the agent
+        self.ekf = None
 
         self.estim_pos_uwb = None
         self.estim_pos_encoders = None
@@ -52,6 +56,15 @@ class Agent(Shape):
                 self.sensors["Encoder_right"] = sensor
             else:
                 self.sensors[sensor.sensor_type] = sensor
+        
+    def initialize_ekf(self, encoder_noise, uwb_noise):
+        self.ekf = AgentEKF(encoder_noise, uwb_noise)
+
+    def HJacobian_at(self, x):
+        return np.eye(4)  # Jacobian matrix for the linear measurement function
+
+    def Hx_at(self, x):
+        return x  # Direct observation of state
     
     def move(self, left_speed, right_speed, dt):
         # Update the agent's pose

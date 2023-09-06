@@ -1,12 +1,12 @@
 from Classes2.Environment import Environment
 import matplotlib.pyplot as plt
 
-num_agents = 5
+num_agents = 2
 env = Environment('Rooms/dungeon.csv')
 env.createAgents(num_agents)
-env.createVoronoiTessellation(100)
+env.createVoronoiTessellation(50)
 env.assignRobots()
-env.initializeAgentSensors()
+env.initializeAgentSensors(['Encoders', 'Lidar', 'StereoCamera'])
 
 # create a figure with 4 subplots
 fig, axes = plt.subplots(nrows=2, ncols=2)

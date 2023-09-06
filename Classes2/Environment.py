@@ -6,7 +6,7 @@ from matplotlib.patches import Polygon
 
 from Classes2.Shapes import Room, Obstacle
 from Classes2.Agent import Agent
-from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, LiDAR
+from Classes2.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, DepthSensor
 from Classes2.VoronoiHandler import VoronoiHandler
 from Classes2.RobotAssigner import RobotAssigner
 
@@ -20,16 +20,18 @@ class Environment:
         self.shapes_coord = []
         # create variable to store ideal map of the environment
         self.ideal_map = []
-        self.importCSV()
         # create a VoronoiHandler object
         self.vh = None
         # create a RobotAssigner object
         self.ra = None
         # create variables to save regions and paths
         self.region_paths = []
-        
         # create handles for the figure and axes
         self.fig, self.axes = None, None
+        self.limit_axes = None
+        self.axes_offset = 1
+
+        self.importCSV()
         
     def importCSV(self):
         df = pd.read_csv(self.filename, header=None, skiprows=1, na_values=['NA', 'na'])
@@ -66,6 +68,13 @@ class Environment:
                 # add UWB anchors to the vertices of the room
                 for j in range(len(self.room.vertex_x)):
                     self.addUWBAnchor(self.room.vertex_x[j], self.room.vertex_y[j])
+                
+                # get min and max values of the room for limiting the axes
+                x_max = np.max(self.shapes_coord[i][0])
+                y_max = np.max(self.shapes_coord[i][1])
+                x_min = np.min(self.shapes_coord[i][0])
+                y_min = np.min(self.shapes_coord[i][1])
+                self.limit_axes = [x_min, x_max, y_min, y_max]
 
             elif self.shapes_coord[i][2] == 'obstacle':
                 obstacle = Obstacle(self.shapes_coord[i][0], self.shapes_coord[i][1])
@@ -100,16 +109,38 @@ class Environment:
             for i in range(num_agents-1):
                 self.agents.append(Agent(self.agents[0].vertex_x, self.agents[0].vertex_y))
     
-    def initializeAgentSensors(self):
+    def initializeAgentSensors(self, sensors):
         for agent in self.agents:
-            left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 720, noise_std_dev=10)
-            right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 720, noise_std_dev=10)
-            gyroscope = Gyroscope(agent.x, agent.y, noise_std_dev=0)
-            accelerometer = Accelerometer(agent.x, agent.y, noise_std_dev=0)
-            magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0)
-            lidar = LiDAR(agent.x, agent.y, "Lidar", 5, 90, 360, noise_std_dev=0)
-            #stereo_camera = DepthSensor(agent.x, agent.y, "StereoCamera", 5, 240, 120, noise_std_dev=0)
-            agent.initialize_sensors([left_encoder, right_encoder, gyroscope, accelerometer, magnetometer, lidar])
+            sensor_list = []
+            if 'Encoders' in sensors:
+                left_encoder = Encoder(agent.x - agent.wheels_distance/2, agent.y, "EncoderLeft", 720, noise_std_dev=0)
+                right_encoder = Encoder(agent.x + agent.wheels_distance/2, agent.y, "EncoderRight", 720, noise_std_dev=0)
+                sensor_list.append(left_encoder)
+                sensor_list.append(right_encoder)
+            if 'Gyroscope' in sensors:
+                gyroscope = Gyroscope(agent.x, agent.y, noise_std_dev=0)
+                sensor_list.append(gyroscope)
+            if 'Accelerometer' in sensors:
+                accelerometer = Accelerometer(agent.x, agent.y, noise_std_dev=0)
+                sensor_list.append(accelerometer)
+            if 'Magnetometer' in sensors:
+                magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0)
+                sensor_list.append(magnetometer)
+            if 'Lidar' in sensors:
+                lidar = DepthSensor(agent.x, agent.y, "Lidar", 3, 90, 360, noise_std_dev=0)
+                sensor_list.append(lidar)
+            if 'StereoCamera' in sensors:
+                stereo_camera = DepthSensor(agent.x, agent.y, "StereoCamera", 3, 240, 120, noise_std_dev=0)
+                sensor_list.append(stereo_camera)
+            agent.initialize_sensors(sensor_list)
+
+    def addRandomNoise(self, agent, activate=False):
+        if activate:
+            for sensor in agent.sensors.values():
+                sensor.noise_std_dev = np.random.uniform(0, 0.1)
+        else:
+            for sensor in agent.sensors.values():
+                sensor.noise_std_dev = 0
 
     def multilaterationUWB(self, agent, distances):
         result = minimize(self.cost_function, [agent.x, agent.y], args=(self.anchors, distances, np.ones(len(distances))), method='Nelder-Mead')
@@ -127,11 +158,13 @@ class Environment:
         for agent in self.agents:
             agent.x, agent.y = agent.target_points[0][0], agent.target_points[1][0]
             agent.theta = 0  # optionally reset orientation if needed
+            # add a different noise to each agent
+            self.addRandomNoise(agent, activate=True)
 
         while True:
             # Clear the axes and redraw the environment of the first plot
             ax.cla()
-            self.plotRoom(ax)
+            self.plotSimEnv(ax)
             for idx, agent in enumerate(self.agents):
                 # Only update the agent's position if there are remaining points in its path
                 if len(agent.target_points[0]) > 1:
@@ -151,11 +184,11 @@ class Environment:
             
                     # ENCODERS
                     # Update encoder data for left and right wheels
-                    agent.sensors["Encoder_left"].update(agent.wheel_radius, agent.v - agent.omega * agent.wheels_distance / 2, dt)
-                    agent.sensors["Encoder_right"].update(agent.wheel_radius, agent.v + agent.omega * agent.wheels_distance / 2, dt)
+                    agent.sensors["EncoderLeft"].update(agent.wheel_radius, agent.v - agent.omega * agent.wheels_distance / 2, dt)
+                    agent.sensors["EncoderRight"].update(agent.wheel_radius, agent.v + agent.omega * agent.wheels_distance / 2, dt)
                     # Estimate angular displacement and update encoders-based estimations
-                    delta_theta_left = agent.get_sensor_data("Encoder_left") / agent.sensors["Encoder_left"].ticks_per_revolution * 2 * np.pi
-                    delta_theta_right = agent.get_sensor_data("Encoder_right") / agent.sensors["Encoder_right"].ticks_per_revolution * 2 * np.pi
+                    delta_theta_left = agent.get_sensor_data("EncoderLeft") / agent.sensors["EncoderLeft"].ticks_per_revolution * 2 * np.pi
+                    delta_theta_right = agent.get_sensor_data("EncoderRight") / agent.sensors["EncoderRight"].ticks_per_revolution * 2 * np.pi
                     delta_theta = 0.5 * (delta_theta_right + delta_theta_left)
                     delta_s = agent.wheel_radius * delta_theta
                     delta_x = delta_s * np.cos(agent.theta + 0.5 * delta_theta)
@@ -168,10 +201,15 @@ class Environment:
 
                     # LIDAR
                     # Update lidar data
-                    agent.sensors["LiDAR"].update(agent.x, agent.y, agent.theta, self.ideal_map)
+                    agent.sensors["Lidar"].update(agent.x, agent.y, agent.theta, self.ideal_map)
                     # Convert LiDAR distances to cartesian coordinates
-                    lidar_distances = agent.sensors["LiDAR"].get_data()
-                    lidar_cartesian_coords = agent.sensors["LiDAR"].convert_to_cartesian(lidar_distances, agent.x, agent.y, agent.theta)
+                    lidar_cartesian = agent.sensors["Lidar"].convert_to_cartesian(agent.x, agent.y, agent.theta)
+
+                    # STEREO CAMERA
+                    # Update stereo camera data
+                    agent.sensors["StereoCamera"].update(agent.x, agent.y, agent.theta, self.ideal_map)
+                    # Convert stereo camera distances to cartesian coordinates
+                    stereo_camera_cartesian = agent.sensors["StereoCamera"].convert_to_cartesian(agent.x, agent.y, agent.theta)
                     
                     #-----------------ESTIMATION-----------------
                     # TODO: Implement state estimation here
@@ -184,6 +222,7 @@ class Environment:
                     #agent.move(left_speed, right_speed, dt)
                     # move the agent randomly
                     agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
+                    
                     #-----------------PLOTS-----------------
                     # Plotting the path for the agent
                     ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
@@ -196,8 +235,11 @@ class Environment:
                     # Plotting the estimated position of the agent with encoders
                     ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
                     # Plot LiDAR points around the agent's position
-                    lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian_coords)
+                    lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
                     ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                    # Plot stereo camera points around the agent's position
+                    stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
+                    ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
 
                     # If the agent reached the current target, remove this target from its path
                     if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 0.1:
@@ -221,6 +263,9 @@ class Environment:
             ax.plot(obstacle.vertex_x, obstacle.vertex_y, 'k', linewidth=1)
         for anchor in self.anchors:
             ax.plot(anchor.x, anchor.y, 'o', markersize=4, markerfacecolor='r', markeredgecolor='r')
+        
+        ax.set_xlim(self.limit_axes[0]-self.axes_offset, self.limit_axes[1]+self.axes_offset)
+        ax.set_ylim(self.limit_axes[2]-self.axes_offset, self.limit_axes[3]+self.axes_offset)
     
     def plotVoronoiTessellation(self, ax):
         ax.set_title('Voronoi Tessellation')
@@ -231,6 +276,9 @@ class Environment:
         for line in self.vh.clipped_ridges:
             x, y = line.xy
             ax.plot(x, y, color="black", linewidth=0.5)
+
+        ax.set_xlim(self.limit_axes[0]-self.axes_offset, self.limit_axes[1]+self.axes_offset)
+        ax.set_ylim(self.limit_axes[2]-self.axes_offset, self.limit_axes[3]+self.axes_offset)
         
     def plotAgentAssignments(self, ax):
         ax.set_title('Agents Regions')
@@ -249,6 +297,9 @@ class Environment:
                     x, y = region.exterior.xy
                     ax.fill(x, y, color='C'+str(i), alpha=0.5)
         
+        ax.set_xlim(self.limit_axes[0]-self.axes_offset, self.limit_axes[1]+self.axes_offset)
+        ax.set_ylim(self.limit_axes[2]-self.axes_offset, self.limit_axes[3]+self.axes_offset)
+        
     def plotAgentAssignmentsAndPaths(self, ax):
         ax.set_title('Agents Regions with TSP Paths')
         ax.set_xlabel('x (m)')
@@ -259,3 +310,16 @@ class Environment:
             ax.plot(self.region_paths[i][0], self.region_paths[i][1], marker='o', markersize=2, linewidth=1, color='C'+str(i), label=f"Robot {i}")
         # plot room boundary
         ax.plot(self.room.vertex_x, self.room.vertex_y, color="k", linewidth=1, label="Room")
+        
+        ax.set_xlim(self.limit_axes[0]-self.axes_offset, self.limit_axes[1]+self.axes_offset)
+        ax.set_ylim(self.limit_axes[2]-self.axes_offset, self.limit_axes[3]+self.axes_offset)
+    
+    def plotSimEnv(self, ax):
+        ax.set_title('Simulation Environment')
+        ax.set_xlabel('x (m)')
+        ax.set_ylabel('y (m)')
+        ax.set_aspect('equal', adjustable='box')
+        ax.grid(True, which='both', linestyle='dotted')
+        
+        ax.set_xlim(self.limit_axes[0]-self.axes_offset, self.limit_axes[1]+self.axes_offset)
+        ax.set_ylim(self.limit_axes[2]-self.axes_offset, self.limit_axes[3]+self.axes_offset)

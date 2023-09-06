@@ -47,11 +47,11 @@ class Agent(Shape):
     
     def initialize_sensors(self, sensors):
         for sensor in sensors:
-            key = type(sensor).__name__
-            # If it's an encoder, specify which wheel
-            if key == "Encoder":
-                key += "_left" if "Encoder_left" not in self.sensors else "_right"
-            self.sensors[key] = sensor
+            if sensor.sensor_type == "Encoder":
+                self.sensors["Encoder_left"] = sensor
+                self.sensors["Encoder_right"] = sensor
+            else:
+                self.sensors[sensor.sensor_type] = sensor
     
     def move(self, left_speed, right_speed, dt):
         # Update the agent's pose

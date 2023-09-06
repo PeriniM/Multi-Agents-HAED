@@ -70,7 +70,7 @@ class Magnetometer(Sensor):
     def get_data(self):
         return self.magnetic_field
     
-class LiDAR(Sensor):
+class DepthSensor(Sensor):
     def __init__(self, x, y, sensor_type, max_range, num_beams, fov_degrees, noise_std_dev=0.1):
         super().__init__(x, y, sensor_type, noise_std_dev)
         self.max_range = max_range
@@ -133,9 +133,9 @@ class LiDAR(Sensor):
 
 
     
-    def convert_to_cartesian(self, distances, robot_x, robot_y, robot_theta):
+    def convert_to_cartesian(self, robot_x, robot_y, robot_theta):
         cartesian_coords = []
-        for i, distance in enumerate(distances):
+        for i, distance in enumerate(self.readings):
             angle = self.beam_angles[i] + robot_theta
             x = robot_x + distance * np.cos(angle)
             y = robot_y + distance * np.sin(angle)

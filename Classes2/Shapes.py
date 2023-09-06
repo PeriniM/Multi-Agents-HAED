@@ -15,7 +15,11 @@ class Shape():
         return np.array([self.vertex_x, self.vertex_y]).T 
     
     def getLines(self):
-        return [self.vertex_x[:-1], self.vertex_y[:-1], self.vertex_x[1:], self.vertex_y[1:]]
+        segments = []
+        for i in range(len(self.vertex_x) - 1):  # Subtracting 1 to avoid an index out of range error
+            segment = (self.vertex_x[i], self.vertex_y[i], self.vertex_x[i+1], self.vertex_y[i+1])
+            segments.append(segment)
+        return segments
 
 class Room(Shape):
     def __init__(self, vertex_x, vertex_y):

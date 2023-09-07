@@ -59,6 +59,8 @@ class Agent(Shape):
         
     def initialize_ekf(self, encoder_noise, uwb_noise):
         self.ekf = AgentEKF(encoder_noise, uwb_noise)
+        # Setting the starting estimate for theta in the EKF to match the agent's orientation
+        self.ekf.x[2] = self.theta
 
     def HJacobian_at(self, x):
         return np.eye(4)  # Jacobian matrix for the linear measurement function
@@ -75,6 +77,10 @@ class Agent(Shape):
             self.x += delta_s * np.cos(self.theta + 0.5 * delta_theta)
             self.y += delta_s * np.sin(self.theta + 0.5 * delta_theta)
             self.theta += delta_theta
+
+            # Update self.v and self.omega
+            self.v = delta_s / dt
+            self.omega = delta_theta / dt
         else:
             raise ValueError("Unknown dynamics type: {}".format(self.dynamics))
 

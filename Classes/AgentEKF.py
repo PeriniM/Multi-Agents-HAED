@@ -3,44 +3,34 @@ from filterpy.kalman import ExtendedKalmanFilter
 
 class AgentEKF(ExtendedKalmanFilter):
     def __init__(self, encoder_noise, uwb_noise):
-        super(AgentEKF, self).__init__(dim_x=4, dim_z=4)  
+        super(AgentEKF, self).__init__(dim_x=5, dim_z=5)  # Adjusted for theta
 
         # Initial state estimate
-        self.x = np.array([0, 0, 0, 0])  
+        self.x = np.array([0, 0, 0, 0, 0])  # [x, y, theta, v, omega]
 
         # Initialize the state covariance
-        self.P *= 1e-4
+        self.P = np.diag([1e-2, 1e-2, 1e-2, 1e-1, 1e-1])  # Some example values, adjust as needed
 
         # Process noise matrix
-        # As you might not have exact noise for the process, we make a guess
-        # You might need to adjust this based on experience
-        self.Q = np.diag([1e-3, 1e-3, 1e-3, 1e-3])
+        self.Q = np.diag([1e-3, 1e-3, 1e-3, 1e-3, 1e-3])
 
         # Measurement noise matrix
-        self.R = np.diag([uwb_noise, uwb_noise, encoder_noise, encoder_noise])
+        self.R = np.diag([uwb_noise, uwb_noise, 1e-3, encoder_noise, encoder_noise])  # Added noise for theta estimation, adjust as needed
 
-        # State transition function (from your motion model)
+        # State transition function
         self.f = self.state_transition
 
     def state_transition(self, x, dt, u):
-        """Predict next state from current state and control inputs.
-        
-        Args:
-        - x: Current state [x, y, v, omega]
-        - dt: Time step
-        - u: Control inputs [v, omega]
-        
-        Returns:
-        - Next state estimate
-        """
+        """Predict next state from current state and control inputs."""
         # Extract states
-        x_pos, y_pos, v, omega = x
+        x_pos, y_pos, theta, v, omega = x
         v_control, omega_control = u
 
         # Predict using differential drive motion model
-        x_pos_new = x_pos + v * np.cos(omega) * dt
-        y_pos_new = y_pos + v * np.sin(omega) * dt
-        v_new = v_control  # Assuming v remains constant
-        omega_new = omega_control  # Assuming omega remains constant
+        x_pos_new = x_pos + v * np.cos(theta) * dt
+        y_pos_new = y_pos + v * np.sin(theta) * dt
+        theta_new = theta + omega * dt
+        v_new = v_control
+        omega_new = omega_control
         
-        return np.array([x_pos_new, y_pos_new, v_new, omega_new])
+        return np.array([x_pos_new, y_pos_new, theta_new, v_new, omega_new])

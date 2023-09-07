@@ -195,25 +195,28 @@ class Environment:
                 agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
                 agent.estim_omega_encoders = delta_theta / dt
 
-                # EKF Implementation
-                agent.initialize_ekf(agent.sensors["EncoderLeft"].noise_std_dev, self.anchors[0].noise_std_dev)
-                # 1. EKF Predict
-                # Use the already computed predicted states for prediction
-                agent.ekf.predict()
+                # # EKF Implementation
+                # agent.initialize_ekf(agent.sensors["EncoderLeft"].noise_std_dev, self.anchors[0].noise_std_dev)
+                
+                # # 1. EKF Predict
+                # agent.ekf.predict()
 
-                # 2. EKF Update using measurements
-                # Form the measurement vector
-                z = np.array([
-                    agent.estim_pos_uwb[0], 
-                    agent.estim_pos_uwb[1], 
-                    agent.estim_v_encoders[0], 
-                    agent.estim_v_encoders[1]
-                ])
+                # # 2. EKF Update using measurements
+                # # Form the measurement vector. Assuming the last entry of the state represents theta
+                # z = np.array([
+                #     agent.estim_pos_uwb[0], 
+                #     agent.estim_pos_uwb[1], 
+                #     agent.estim_v_encoders[0], 
+                #     agent.estim_v_encoders[1],
+                #     agent.theta
+                # ])
 
-                agent.ekf.update(z=z, HJacobian=agent.HJacobian_at, Hx=agent.Hx_at)
+                # agent.ekf.update(z=z, HJacobian=agent.HJacobian_at, Hx=agent.Hx_at)
 
-                # Update agent's state using EKF estimates
-                agent.x, agent.y, agent.v, agent.omega = agent.ekf.x_post
+                # # Update agent's state using EKF estimates
+                # # Assuming the EKF state vector is [x, y, v, omega, theta]
+                # agent.x, agent.y, agent.v, agent.omega, agent.theta = agent.ekf.x_post
+
 
                 # LIDAR
                 # Update lidar data
@@ -255,8 +258,8 @@ class Environment:
                 # Plotting the estimated position of the agent with encoders
                 # ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
                 # Plot LiDAR points around the agent's position
-                # lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
-                # ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
+                ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
                 # Plot stereo camera points around the agent's position
                 # stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
                 # ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)

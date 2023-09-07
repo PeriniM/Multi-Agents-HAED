@@ -14,8 +14,10 @@ class Agent(Shape):
         self.omega = 0
 
         # set max speed and angular velocity
-        self.max_v = 5
-        self.max_omega = 5
+        self.max_v = 2
+        self.max_omega = 2
+        # set PID constants
+        self.kp = 1000
 
         # set wheels distance as the minimum distance between the middle point and the closest vertex
         self.wheels_distance = np.min(np.sqrt((self.x - vertex_x)**2 + (self.y - vertex_y)**2))
@@ -68,21 +70,58 @@ class Agent(Shape):
     def Hx_at(self, x):
         return x  # Direct observation of state
     
-    def move(self, left_speed, right_speed, dt):
+    def move(self, target_x, target_y, desired_speed, dt):
+        # Use the proportional controller to update velocities
+        self.update(target_x, target_y, desired_speed, dt)
+
+        # Ensure linear and angular velocities are within limits
+        self.v = np.clip(self.v, -self.max_v, self.max_v)
+        self.omega = np.clip(self.omega, -self.max_omega, self.max_omega)
+        
         # Update the agent's pose
         if self.dynamics == "differential":
             # Calculate the new pose
-            delta_s = 0.5 * (left_speed + right_speed) * dt
-            delta_theta = (right_speed - left_speed) / self.wheels_distance * dt
+            delta_s = self.v * dt
+            delta_theta = self.omega * dt
             self.x += delta_s * np.cos(self.theta + 0.5 * delta_theta)
             self.y += delta_s * np.sin(self.theta + 0.5 * delta_theta)
             self.theta += delta_theta
-
-            # Update self.v and self.omega
-            self.v = delta_s / dt
-            self.omega = delta_theta / dt
         else:
             raise ValueError("Unknown dynamics type: {}".format(self.dynamics))
+    
+    def update(self, target_x, target_y, desired_speed, dt):
+        # Calculate the error in position
+        error_x = target_x - self.x
+        error_y = target_y - self.y
+
+        # Calculate the distance to the target
+        dist_to_target = np.sqrt(error_x**2 + error_y**2)
+
+        # Calculate the desired velocity based on the error
+        desired_velocity = self.kp * dist_to_target
+
+        # Calculate the angle to the target
+        target_angle = np.arctan2(error_y, error_x)
+
+        # Calculate the error in angle
+        error_angle = target_angle - self.theta
+
+        # Ensure the error_angle is within the range [-pi, pi]
+        if error_angle > np.pi:
+            error_angle -= 2 * np.pi
+        elif error_angle < -np.pi:
+            error_angle += 2 * np.pi
+
+        # Calculate the desired angular velocity based on the angle error
+        desired_angular_velocity = self.kp * error_angle
+
+        # Set the desired linear and angular velocities
+        self.v = desired_velocity
+        self.omega = desired_angular_velocity
+
+        # Limit the linear velocity to the desired speed
+        if self.v > desired_speed:
+            self.v = desired_speed
 
     def get_sensor_data(self, sensor_name):
         return self.sensors[sensor_name].get_data()

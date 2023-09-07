@@ -1,8 +1,13 @@
+import os
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from matplotlib.patches import Polygon
+import imageio
+import io
+import cv2
 
 from Classes.Shapes import Room, Obstacle
 from Classes.Agent import Agent
@@ -26,10 +31,18 @@ class Environment:
         self.ra = None
         # create variables to save regions and paths
         self.region_paths = []
+        # create variables to save the number of targets and the total number of targets
+        self.targetsTotal = 0
+        self.targetsReached = 0
+
         # create handles for the figure and axes
         self.fig, self.axes = None, None
         self.limit_axes = None
         self.axes_offset = 1
+
+        # save video frames
+        self.frames = []
+        self.dt = None
 
         self.importCSV()
         
@@ -103,6 +116,7 @@ class Environment:
         # assign the paths to the agents
         for i in range(len(self.agents)):
             self.agents[i].target_points = [self.region_paths[i][0], self.region_paths[i][1]]
+            self.targetsTotal += len(self.agents[i].target_points[0])
 
     def createAgents(self, num_agents):
         if num_agents > 1:
@@ -127,7 +141,7 @@ class Environment:
                 magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0)
                 sensor_list.append(magnetometer)
             if 'Lidar' in sensors:
-                lidar = DepthSensor(agent.x, agent.y, "Lidar", 10, 90, 360, noise_std_dev=0.2)
+                lidar = DepthSensor(agent.x, agent.y, "Lidar", 5, 90, 360, noise_std_dev=0.2)
                 sensor_list.append(lidar)
             if 'StereoCamera' in sensors:
                 stereo_camera = DepthSensor(agent.x, agent.y, "StereoCamera", 3, 240, 120, noise_std_dev=0)
@@ -153,17 +167,19 @@ class Environment:
             eq.append((np.sqrt((anchors[i].x - initial_guess[0])**2 + (anchors[i].y - initial_guess[1])**2) - distances[i])*weights[i])
         return np.sum(np.array(eq)**2)
 
-    def simulate(self, ax, dt=0.1):
-
+    def simulate(self, ax, dt=0.1, saveVideo=False, videoName='Simulation', videoSpeed=1.0):
+        
+        self.dt = dt
         # Initialize each agent's position to the starting point of its path
         for agent in self.agents:
             agent.x, agent.y = agent.target_points[0][0], agent.target_points[1][0]
-            agent.theta = 0  # optionally reset orientation if needed
+            # set the agent's orientation to the direction of the first target point
+            agent.theta = np.arctan2(agent.target_points[1][1] - agent.target_points[1][0], agent.target_points[0][1] - agent.target_points[0][0])
             # add a different noise to each agent
             # to keep the original noise use addSensorNoise(agent)
             self.addSensorNoise(agent, noise=0.1, random=False)
 
-        while True:
+        while self.targetsReached < self.targetsTotal:
             # Clear the axes and redraw the environment of the first plot
             ax.cla()
             self.plotSimEnv(ax)
@@ -195,29 +211,6 @@ class Environment:
                 agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
                 agent.estim_omega_encoders = delta_theta / dt
 
-                # # EKF Implementation
-                # agent.initialize_ekf(agent.sensors["EncoderLeft"].noise_std_dev, self.anchors[0].noise_std_dev)
-                
-                # # 1. EKF Predict
-                # agent.ekf.predict()
-
-                # # 2. EKF Update using measurements
-                # # Form the measurement vector. Assuming the last entry of the state represents theta
-                # z = np.array([
-                #     agent.estim_pos_uwb[0], 
-                #     agent.estim_pos_uwb[1], 
-                #     agent.estim_v_encoders[0], 
-                #     agent.estim_v_encoders[1],
-                #     agent.theta
-                # ])
-
-                # agent.ekf.update(z=z, HJacobian=agent.HJacobian_at, Hx=agent.Hx_at)
-
-                # # Update agent's state using EKF estimates
-                # # Assuming the EKF state vector is [x, y, v, omega, theta]
-                # agent.x, agent.y, agent.v, agent.omega, agent.theta = agent.ekf.x_post
-
-
                 # LIDAR
                 # Update lidar data
                 agent.sensors["Lidar"].update(agent.x, agent.y, agent.theta, self.ideal_map)
@@ -237,18 +230,17 @@ class Environment:
                     agent.scanned_map.append(stereo_camera_cartesian[i])
                 
                 #-----------------MOTION PLANNING-----------------                
-                # TODO: Implement motion planning here
 
                 #-----------------MOTION CONTROL-----------------
-                # Update the agent's position
-                #agent.move(left_speed, right_speed, dt)
+                # Update the agent's position with proportional control
+                agent.move(target[0], target[1], agent.max_v, dt)
                 # move the agent randomly
-                agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
+                #agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
                 #agent.x, agent.y = target[0], target[1]
 
                 #-----------------PLOTS-----------------
                 # Plotting the path for the agent
-                # ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
+                ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.5)
                 # Plotting the current position of the agent
                 ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
                 # Plot the agent's orientation using a line
@@ -267,16 +259,64 @@ class Environment:
                 if len(agent.scanned_map) > 0:
                     scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)
                     ax.scatter(scanned_map_x_coords, scanned_map_y_coords, color='C' + str(idx), marker='o', alpha=1, s=0.5)
-                # If the agent reached the current target, remove this target from its path
-                if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 0.1 and len(agent.target_points[0]) > 1:
+                # If the agent is closed to the current target, remove this target from its path
+                if np.linalg.norm(np.array([agent.x, agent.y]) - np.array(target)) <= 2 and len(agent.target_points[0]) > 1:
                     agent.target_points[0].pop(0)
                     agent.target_points[1].pop(0)
+                    self.targetsReached += 1
 
             # If window is closed, then stop the simulation
             if not plt.fignum_exists(ax.get_figure().number):
                 return
 
             plt.pause(dt)
+            
+            # Save the current frame
+            if saveVideo:
+                img = Environment.get_img_from_fig(ax.get_figure())
+                self.frames.append(img)
+            self.save_video(videoName, videoSpeed)
+    
+    @staticmethod
+    def get_img_from_fig(fig, dpi=80):
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=dpi)
+        buf.seek(0)
+        img_arr = np.frombuffer(buf.getvalue(), dtype=np.uint8)
+        buf.close()
+        img = cv2.imdecode(img_arr, 1)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        return img
+
+    def save_video(self, video_name='simulation_video', simSpeed=1.0):
+
+        real_time_fps = 1 / self.dt
+        adjusted_fps = real_time_fps * simSpeed
+        # get current directory
+        current_dir = os.getcwd()
+        # chang
+        # Create a temporary directory to store the frames if it doesn't exist
+        if not os.path.exists(current_dir + "\\temp_frames"):
+            os.mkdir(current_dir + "\\temp_frames")
+        # save the frames in the temporary directory
+        for idx in range(len(self.frames)):
+            plt.imsave(f"{current_dir}\\temp_frames\\frame_{idx:04}.png", self.frames[idx])
+
+        # use imageio to create the video and save it in the current directory
+        images = []
+        for filename in os.listdir(current_dir + "\\temp_frames"):
+            images.append(imageio.imread(current_dir + "\\temp_frames\\" + filename))
+        video_name = video_name + '.mp4'
+        imageio.mimsave(video_name, images, fps=adjusted_fps)
+        
+        print(f"Video saved as {video_name}")
+
+        # Clean up temporary frames
+        for idx in range(len(self.frames)):
+            os.remove(f"{current_dir}\\temp_frames\\frame_{idx:04}.png")
+
+        os.rmdir(current_dir + "\\temp_frames")
 
     def plotRoom(self, ax):
         ax.set_title('Room')

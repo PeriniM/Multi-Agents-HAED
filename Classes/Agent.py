@@ -14,8 +14,8 @@ class Agent(Shape):
         self.omega = 0
 
         # set max speed and angular velocity
-        self.max_v = 2
-        self.max_omega = 2
+        self.max_v = 5
+        self.max_omega = 5
         # set PID constants
         self.kp = 1000
 

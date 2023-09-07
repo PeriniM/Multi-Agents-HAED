@@ -27,19 +27,13 @@ class Agent(Shape):
         self.sensors = {}
 
         # Initialize the Extended Kalman Filter for the agent
-        self.ekf = None
+        self.agentEKF = None
 
-        self.estim_pos_uwb = None
-        self.estim_pos_encoders = None
-
-        self.estim_v_uwb = None
-        self.estim_v_encoders = None
-
-        self.estim_omega_uwb = None
-        self.estim_omega_encoders = None
-
-        self.estim_theta_uwb = None
-        self.estim_theta_encoders = None
+        # Estimation variables
+        self.pos_uwb = None
+        self.delta_theta_encoders = None
+        self.delta_s_encoders = None
+        self.theta_mag = None
 
         # Iniitialize the target points of the path to follow 
         self.target_points = None
@@ -58,18 +52,19 @@ class Agent(Shape):
                 self.sensors["Encoder_right"] = sensor
             else:
                 self.sensors[sensor.sensor_type] = sensor
-        
-    def initialize_ekf(self, encoder_noise, uwb_noise):
-        self.ekf = AgentEKF(encoder_noise, uwb_noise)
-        # Setting the starting estimate for theta in the EKF to match the agent's orientation
-        self.ekf.x[2] = self.theta
 
-    def HJacobian_at(self, x):
-        return np.eye(4)  # Jacobian matrix for the linear measurement function
-
-    def Hx_at(self, x):
-        return x  # Direct observation of state
+    def initialize_ekf(self, initial_state):
+        # Initialize the Extended Kalman Filter for the agent
+        self.agentEKF = AgentEKF(dim_x=3, dim_z=3, initial_state=initial_state)
     
+    def initialize_ekf_matrices(self, P_val, Q_val, R_val):
+        # Initial state covariance. P_val is a 1x3 array
+        self.agentEKF.ekf.P = np.diag(P_val**2)
+        # Process noise. Q_val is a 1x3 array
+        self.agentEKF.ekf.Q = np.diag(Q_val**2)
+        # Measurement noise. R_val is a 1x3 array
+        self.agentEKF.ekf.R = np.diag(R_val**2)
+
     def move(self, target_x, target_y, desired_speed, dt):
         # Use the proportional controller to update velocities
         self.update(target_x, target_y, desired_speed, dt)

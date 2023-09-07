@@ -62,13 +62,13 @@ class Accelerometer(Sensor):
 class Magnetometer(Sensor):
     def __init__(self, x, y, noise_std_dev=0.1):
         super().__init__(x, y, 'Magnetometer', noise_std_dev)
-        self.magnetic_field = [0, 0]  # Assuming 2D magnetic field [mx, my]
+        self.orientation = 0
 
-    def update(self, true_magnetic_field):
-        self.magnetic_field = [self.add_noise(val) for val in true_magnetic_field]
+    def update(self, theta):
+        self.orientation = self.add_noise(theta)
 
     def get_data(self):
-        return self.magnetic_field
+        return self.orientation
     
 class DepthSensor(Sensor):
     def __init__(self, x, y, sensor_type, max_range, num_beams, fov_degrees, noise_std_dev=0.1):

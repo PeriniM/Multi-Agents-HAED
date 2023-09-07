@@ -138,7 +138,7 @@ class Environment:
                 accelerometer = Accelerometer(agent.x, agent.y, noise_std_dev=0)
                 sensor_list.append(accelerometer)
             if 'Magnetometer' in sensors:
-                magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0)
+                magnetometer = Magnetometer(agent.x, agent.y, noise_std_dev=0.1)
                 sensor_list.append(magnetometer)
             if 'Lidar' in sensors:
                 lidar = DepthSensor(agent.x, agent.y, "Lidar", 5, 90, 360, noise_std_dev=0.2)
@@ -176,7 +176,14 @@ class Environment:
             agent.theta = np.arctan2(agent.target_points[1][1] - agent.target_points[1][0], agent.target_points[0][1] - agent.target_points[0][0])
             # add a different noise to each agent
             # to keep the original noise comment addSensorNoise(...)
-            self.addSensorNoise(agent, noise=0, random=True)
+            self.addSensorNoise(agent, noise=0.1, random=True)
+            # EKF initialization
+            agent.initialize_ekf(np.array([agent.x, agent.y, agent.theta]))
+            # state is [x, y, theta], control is [delta_s, delta_theta]
+            P_val = np.array([self.anchors[0].noise_std_dev, self.anchors[0].noise_std_dev, agent.sensors["Magnetometer"].noise_std_dev])
+            Q_val = np.array([agent.sensors["EncoderLeft"].noise_std_dev, agent.sensors["EncoderRight"].noise_std_dev, agent.sensors["Magnetometer"].noise_std_dev])
+            R_val = np.array([agent.sensors["EncoderLeft"].noise_std_dev, agent.sensors["EncoderRight"].noise_std_dev, agent.sensors["Magnetometer"].noise_std_dev])
+            agent.initialize_ekf_matrices(P_val, Q_val, R_val)
 
         while self.targetsReached < self.targetsTotal:
             # Clear the axes and redraw the environment of the first plot
@@ -193,22 +200,33 @@ class Environment:
                         anchor.update(agent.x, agent.y)
                         self.anchors_distances.append(anchor.get_data())
                     # Update agent's position using multilateration
-                    agent.estim_pos_uwb = self.multilaterationUWB(agent, self.anchors_distances)
-            
+                    agent.pos_uwb = self.multilaterationUWB(agent, self.anchors_distances)
+
                     # ENCODERS
                     # Update encoder data for left and right wheels
                     agent.sensors["EncoderLeft"].update(agent.wheel_radius, agent.v - agent.omega * agent.wheels_distance / 2, dt)
                     agent.sensors["EncoderRight"].update(agent.wheel_radius, agent.v + agent.omega * agent.wheels_distance / 2, dt)
-                    # Estimate angular displacement and update encoders-based estimations
+                    # Estimate linear and angular displacement using encoders
                     delta_theta_left = agent.get_sensor_data("EncoderLeft") / agent.sensors["EncoderLeft"].ticks_per_revolution * 2 * np.pi
                     delta_theta_right = agent.get_sensor_data("EncoderRight") / agent.sensors["EncoderRight"].ticks_per_revolution * 2 * np.pi
                     delta_theta = 0.5 * (delta_theta_right + delta_theta_left)
                     delta_s = agent.wheel_radius * delta_theta
-                    delta_x = delta_s * np.cos(agent.theta + 0.5 * delta_theta)
-                    delta_y = delta_s * np.sin(agent.theta + 0.5 * delta_theta)
-                    # Calculate estimated position using encoder data
-                    agent.estim_v_encoders = np.array([delta_x, delta_y]) / dt
-                    agent.estim_omega_encoders = delta_theta / dt
+                    agent.delta_theta_encoders = delta_theta
+                    agent.delta_s_encoders = delta_s
+                    
+                    # MAGNETOMETER
+                    # Update magnetometer data
+                    agent.sensors["Magnetometer"].update(agent.theta)
+                    # Estimate the orientation of the agent
+                    agent.theta_mag = agent.sensors["Magnetometer"].get_data()
+
+                    # EKF ESTIMATION
+                    # Predict
+                    # agent.agentEKF.predict([delta_s, delta_theta])
+                    # # Update using UWB and Magnetometer
+                    # agent.agentEKF.update([agent.pos_uwb[0], agent.pos_uwb[1], agent.theta_mag])
+                    # # Update the agent's position
+                    # agent.x, agent.y, agent.theta = agent.agentEKF.ekf.x_post
 
                     # LIDAR
                     # Update lidar data
@@ -227,9 +245,7 @@ class Environment:
                     # Update the scanned map
                     for i in agent.sensors["StereoCamera"].obstacles_idx:
                         agent.scanned_map.append(stereo_camera_cartesian[i])
-                    
-                    #-----------------MOTION PLANNING-----------------                
-
+        
                     #-----------------MOTION CONTROL-----------------
                     # Update the agent's position with proportional control
                     agent.move(target[0], target[1], agent.max_v, dt)

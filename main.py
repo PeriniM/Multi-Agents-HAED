@@ -2,13 +2,13 @@ from Classes.Environment import Environment
 import matplotlib.pyplot as plt
 import datetime
 
-num_agents = 1
+num_agents = 8
 filename = 'dungeon'
 env = Environment('Rooms/'+filename+'.csv')
 env.createAgents(num_agents)
-env.createVoronoiTessellation(400)
+env.createVoronoiTessellation(100)
 env.assignRobots()
-env.initializeAgentSensors(['Encoders', 'Lidar', 'StereoCamera'])
+env.initializeAgentSensors(['Encoders', 'Magnetometer', 'Lidar', 'StereoCamera'])
 
 # create a figure with 4 subplots
 fig, axes = plt.subplots(nrows=2, ncols=2)

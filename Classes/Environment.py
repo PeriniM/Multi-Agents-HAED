@@ -31,11 +31,17 @@ class Environment:
         self.ra = None
         # create variables to save regions and paths
         self.region_paths = []
+
         # create variables to save the number of targets and the total number of targets
         self.targetsTotal = 0
         self.targetsReached = 0
-        self.lastTarget = False
-        self.lastTargetCoords = None
+        # split the agents in groups of 2 or 1
+        self.lastTargetGroups = None
+        self.lastTargetCoords = []
+        # create variable to count the number of final targets reached
+        self.available_agent_index = 0
+        self.available_agents = []
+
         # create handles for the figure and axes
         self.fig, self.axes = None, None
         self.limit_axes = None
@@ -123,6 +129,7 @@ class Environment:
         if num_agents > 1:
             for i in range(num_agents-1):
                 self.agents.append(Agent(self.agents[0].vertex_x, self.agents[0].vertex_y))
+            self.lastTargetGroups = np.ceil(float(num_agents)/2)
     
     def initializeAgentSensors(self, sensors):
         for agent in self.agents:
@@ -253,7 +260,7 @@ class Environment:
 
                     #-----------------PLOTS-----------------
                     # Plotting the path for the agent
-                    ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.2)
+                    ax.plot(agent.target_points[0], agent.target_points[1], color='C' + str(idx), linewidth=1, alpha=0.1)
                     # Plotting the current position of the agent
                     ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
                     # Plot the agent's orientation using a line
@@ -275,14 +282,18 @@ class Environment:
                         agent.target_points[1].pop(0)
                         self.targetsReached += 1
                 else:
-                    if not self.lastTarget:
-                        self.lastTargetCoords = [agent.x, agent.y]
-                        # append the last target point to all the other agents
-                        for agent in self.agents:
-                            agent.target_points[0].append(self.lastTargetCoords[0])
-                            agent.target_points[1].append(self.lastTargetCoords[1])
-
-                        self.lastTarget = True
+                    if not agent.reached_final_target:
+                        if len(self.available_agents) < self.lastTargetGroups:
+                            self.available_agents.append(agent)
+                            
+                        else:
+                            # add position of first available agent as last target
+                            agent.target_points[0].append(self.available_agents[self.available_agent_index].x)
+                            agent.target_points[1].append(self.available_agents[self.available_agent_index].y)
+                            self.available_agent_index += 1
+                            
+                        agent.reached_final_target = True
+                    
                     # plot the scanned map
                     if len(agent.scanned_map) > 0:
                         scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)

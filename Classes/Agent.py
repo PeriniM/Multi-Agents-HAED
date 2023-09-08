@@ -41,6 +41,7 @@ class Agent(Shape):
         # Iniitialize the target points of the path to follow 
         self.target_points = None
         self.scanned_map = []
+        self.reached_final_target = False
         
     def getVertices(self):
         # return transformed vertices

@@ -14,7 +14,7 @@ def random_polygon(vertices_count):
     return list(zip(x, y))
 
 # Compute the histogram representation of the polygon
-def polygon_histogram(polygon):
+def polygon_histogram(polygon, reverse=False):
     rotations = []
     cumulative_lengths = [0]
     for i in range(len(polygon)):
@@ -23,8 +23,10 @@ def polygon_histogram(polygon):
         
         edge_length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
         cumulative_lengths.append(cumulative_lengths[-1] + edge_length)
-        
-        angle = np.arctan2(y2 - y1, x2 - x1)
+        if not reverse:
+            angle = np.arctan2(y2 - y1, x2 - x1)
+        else:
+            angle = np.arctan2(y1 - y2, x1 - x2)
         if i == 0:
             prev_angle = angle
         rotation = angle - prev_angle
@@ -45,7 +47,7 @@ def mse(shift, hist1, hist2):
         mse_value += min_error
     return mse_value / len(hist1[0])
 
-# Adjusted MSE function to find valleys with added vertical and horizontal shifts
+# Adjusted MSE function to find valleys with added vertical and horizontal shifts and polygon rotation shifts
 def valley_mse(params, hist1, hist2):
     slide, dx, dy = params
     shifted_hist2_x = [x + slide for x in hist2[0]]
@@ -67,7 +69,7 @@ poly2 = random_polygon(6)
 
 # Compute histograms
 hist1 = polygon_histogram(poly1)
-hist2 = polygon_histogram(poly2)
+hist2 = polygon_histogram(poly2, reverse=True)
 
 # Find optimal shift
 initial_guess = [0, 0, 0]  # slide, dx, dy

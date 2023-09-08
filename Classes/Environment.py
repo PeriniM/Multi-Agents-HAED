@@ -16,6 +16,33 @@ from Classes.VoronoiHandler import VoronoiHandler
 from Classes.RobotAssigner import RobotAssigner
 
 class Environment:
+    """
+    A class representing the environment of the distributed system project.
+    
+    Attributes:
+    - filename (str): the path of the CSV file containing the environment information.
+    - agents (list): a list of Agent objects representing the agents in the environment.
+    - room (Room): a Room object representing the room in the environment.
+    - anchors (list): a list of UWBAnchor objects representing the anchors in the environment.
+    - anchors_distances (list): a list of distances between the anchors in the environment.
+    - shapes_coord (list): a list of coordinates of the shapes in the environment.
+    - ideal_map (list): a list of lines representing the ideal map of the environment.
+    - vh (VoronoiHandler): a VoronoiHandler object representing the Voronoi tessellation of the environment.
+    - ra (RobotAssigner): a RobotAssigner object representing the robot assigner of the environment.
+    - region_paths (list): a list of paths representing the regions in the environment.
+    - targetsTotal (int): the total number of targets in the environment.
+    - targetsReached (int): the number of targets reached by the agents in the environment.
+    - lastTargetGroups (int): the number of groups of agents that have the last target.
+    - lastTargetCoords (list): a list of coordinates of the last targets of the agents in the environment.
+    - available_agent_index (int): the index of the next available agent in the environment.
+    - available_agents (list): a list of available agents in the environment.
+    - fig (Figure): a Figure object representing the figure of the environment.
+    - axes (Axes): an Axes object representing the axes of the environment.
+    - limit_axes (list): a list of the limits of the axes of the environment.
+    - axes_offset (int): the offset of the axes of the environment.
+    - frames (list): a list of frames representing the video frames of the environment.
+    - dt (float): the time step of the environment.
+    """
     def __init__(self, filename):
         self.filename = filename
         self.agents = []
@@ -54,6 +81,9 @@ class Environment:
         self.importCSV()
         
     def importCSV(self):
+        """
+        Imports the environment information from a CSV file.
+        """
         df = pd.read_csv(self.filename, header=None, skiprows=1, na_values=['NA', 'na'])
       
         for i in range(len(df)):
@@ -108,15 +138,34 @@ class Environment:
                 raise ValueError(f"Unknown element type: {element_type}")
         
     def addUWBAnchor(self, x, y):
+        """
+        Adds a UWBAnchor object to the environment.
+        
+        Parameters:
+        - x (float): the x-coordinate of the anchor.
+        - y (float): the y-coordinate of the anchor.
+        
+        Returns:
+        - anchor (UWBAnchor): the UWBAnchor object added to the environment.
+        """
         anchor = UWBAnchor(x, y, noise_std_dev=0.1)
         self.anchors.append(anchor)
         return anchor
     
     def createVoronoiTessellation(self, num_points=300):
+        """
+        Creates a Voronoi tessellation of the environment.
+        
+        Parameters:
+        - num_points (int): the number of points to generate the Voronoi tessellation.
+        """
         self.vh = VoronoiHandler([self.room.vertex_x, self.room.vertex_y])
         self.vh.generate_voronoi_within_room(num_points)
     
     def assignRobots(self):
+        """
+        Assigns the robots to the regions in the environment.
+        """
         self.ra = RobotAssigner(self.vh.vor, [self.room.vertex_x, self.room.vertex_y], len(self.agents))
         self.ra.divide_areas_using_kmeans()
         self.region_paths = self.ra.compute_tsp_paths()
@@ -126,12 +175,24 @@ class Environment:
             self.targetsTotal += len(self.agents[i].target_points[0])
 
     def createAgents(self, num_agents):
+        """
+        Creates the agents in the environment.
+        
+        Parameters:
+        - num_agents (int): the number of agents to create.
+        """
         if num_agents > 1:
             for i in range(num_agents-1):
                 self.agents.append(Agent(self.agents[0].vertex_x, self.agents[0].vertex_y))
             self.lastTargetGroups = np.ceil(float(num_agents)/2)
     
     def initializeAgentSensors(self, sensors):
+        """
+        Initializes the sensors of the agents in the environment.
+        
+        Parameters:
+        - sensors (list): a list of strings representing the sensors to initialize.
+        """
         for agent in self.agents:
             sensor_list = []
             if 'Encoders' in sensors:
@@ -291,9 +352,14 @@ class Environment:
                             agent.target_points[0].append(self.available_agents[self.available_agent_index].x)
                             agent.target_points[1].append(self.available_agents[self.available_agent_index].y)
                             self.available_agent_index += 1
-                            
+                        
                         agent.reached_final_target = True
                     
+                    # if all agents have reached the last target, stop the simulation
+                    if self.available_agent_index == int(self.lastTargetGroups):
+                        self.save_video(videoName, videoSpeed)
+                        return
+
                     # plot the scanned map
                     if len(agent.scanned_map) > 0:
                         scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)

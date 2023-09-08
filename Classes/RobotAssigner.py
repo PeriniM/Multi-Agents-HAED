@@ -12,13 +12,42 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=RuntimeWarning)
 
 class RobotAssigner:
+    """
+    A class for assigning robots to regions using Voronoi diagrams and solving the Traveling Salesman Problem (TSP)
+    for each robot's assigned regions.
+
+    Attributes:
+        vor (scipy.spatial.Voronoi): Voronoi diagram of the room.
+        room_shape (tuple): Tuple of two arrays representing the x and y coordinates of the room's shape.
+        n_robots (int): Number of robots to assign.
+        robot_assignments (list): List of lists representing the regions assigned to each robot.
+
+    Methods:
+        divide_areas_using_kmeans(): Divides the Voronoi cells among the robots using KMeans clustering.
+        are_neighbors(region1, region2): Returns True if region1 and region2 share a boundary, False otherwise.
+        compute_tsp_path_for_region(regions): Computes the TSP path for a list of regions.
+        compute_tsp_paths(): Computes the TSP paths for all the regions assigned to each robot.
+        plot_assignments_and_paths(): Plots the robot assignments and TSP paths.
+    """
+
     def __init__(self, vor, room_shape, n_robots):
+        """
+        Initializes a RobotAssigner object.
+
+        Args:
+            vor (scipy.spatial.Voronoi): Voronoi diagram of the room.
+            room_shape (tuple): Tuple of two arrays representing the x and y coordinates of the room's shape.
+            n_robots (int): Number of robots to assign.
+        """
         self.vor = vor
         self.room_shape = room_shape
         self.n_robots = n_robots
         self.robot_assignments = []
 
     def divide_areas_using_kmeans(self):
+        """
+        Divides the Voronoi cells among the robots using KMeans clustering.
+        """
         centroids = []
         region_polygons = []
         room_polygon = Polygon(zip(self.room_shape[0], self.room_shape[1]))
@@ -43,10 +72,29 @@ class RobotAssigner:
 
     @staticmethod
     def are_neighbors(region1, region2):
+        """
+        Returns True if region1 and region2 share a boundary, False otherwise.
+
+        Args:
+            region1 (shapely.geometry.Polygon): First region.
+            region2 (shapely.geometry.Polygon): Second region.
+
+        Returns:
+            bool: True if region1 and region2 share a boundary, False otherwise.
+        """
         shared_boundary = region1.boundary.intersection(region2.boundary)
         return shared_boundary.length > 0
 
     def compute_tsp_path_for_region(self, regions):
+        """
+        Computes the TSP path for a list of regions.
+
+        Args:
+            regions (list): List of shapely.geometry.Polygon objects representing the regions.
+
+        Returns:
+            list: List of indices representing the order in which the regions should be visited.
+        """
         centroids = [region.centroid.coords[0] for region in regions]
         num_points = len(centroids)
         distance_matrix = np.zeros((num_points, num_points))
@@ -67,6 +115,12 @@ class RobotAssigner:
         return tour
     
     def compute_tsp_paths(self):
+        """
+        Computes the TSP paths for all the regions assigned to each robot.
+
+        Returns:
+            list: List of lists representing the TSP paths for each robot.
+        """
         region_tours = []
         for robot_idx, regions in enumerate(self.robot_assignments):
             tour = self.compute_tsp_path_for_region(regions)
@@ -80,6 +134,9 @@ class RobotAssigner:
         return region_tours
 
     def plot_assignments_and_paths(self):
+        """
+        Plots the robot assignments and TSP paths.
+        """
         fig, ax = plt.subplots()
         colors = cm.rainbow(np.linspace(0, 1, self.n_robots))
         for robot_idx, regions in enumerate(self.robot_assignments):

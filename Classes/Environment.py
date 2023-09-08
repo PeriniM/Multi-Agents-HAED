@@ -192,7 +192,13 @@ class Environment:
             for idx, agent in enumerate(self.agents):
                 if len(agent.target_points[0]) > 1:
                     target = [agent.target_points[0][1], agent.target_points[1][1]]
-
+                    
+                    #-----------------MOTION CONTROL-----------------
+                    # Update the agent's position with proportional control
+                    agent.move(target[0], target[1], agent.max_v, dt)
+                    # EKF prediction
+                    agent.agentEKF.predict([agent.delta_s, agent.delta_theta])
+                    
                     #-----------------SENSORS-----------------
                     # UWB MULTILATERATION
                     self.anchors_distances = []
@@ -220,13 +226,11 @@ class Environment:
                     # Estimate the orientation of the agent
                     agent.theta_mag = agent.sensors["Magnetometer"].get_data()
 
-                    # EKF ESTIMATION
-                    # Predict
-                    # agent.agentEKF.predict([delta_s, delta_theta])
-                    # # Update using UWB and Magnetometer
-                    # agent.agentEKF.update([agent.pos_uwb[0], agent.pos_uwb[1], agent.theta_mag])
-                    # # Update the agent's position
-                    # agent.x, agent.y, agent.theta = agent.agentEKF.ekf.x_post
+                    # EKF update
+                    # Update using UWB and Magnetometer
+                    agent.agentEKF.update([agent.pos_uwb[0], agent.pos_uwb[1], agent.theta_mag])
+                    # Update the agent's position
+                    agent.x, agent.y, agent.theta = agent.agentEKF.ekf.x_post
 
                     # LIDAR
                     # Update lidar data
@@ -245,13 +249,6 @@ class Environment:
                     # Update the scanned map
                     for i in agent.sensors["StereoCamera"].obstacles_idx:
                         agent.scanned_map.append(stereo_camera_cartesian[i])
-        
-                    #-----------------MOTION CONTROL-----------------
-                    # Update the agent's position with proportional control
-                    agent.move(target[0], target[1], agent.max_v, dt)
-                    # move the agent randomly
-                    #agent.move(np.random.uniform(-agent.max_v, agent.max_v), np.random.uniform(-agent.max_v, agent.max_v), dt)
-                    #agent.x, agent.y = target[0], target[1]
 
                     #-----------------PLOTS-----------------
                     # Plotting the path for the agent

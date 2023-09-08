@@ -34,7 +34,10 @@ class Agent(Shape):
         self.delta_theta_encoders = None
         self.delta_s_encoders = None
         self.theta_mag = None
-
+        self.delta_s = None
+        self.delta_theta = None
+        
+    
         # Iniitialize the target points of the path to follow 
         self.target_points = None
         self.scanned_map = []
@@ -67,7 +70,7 @@ class Agent(Shape):
 
     def move(self, target_x, target_y, desired_speed, dt):
         # Use the proportional controller to update velocities
-        self.update(target_x, target_y, desired_speed, dt)
+        self.update(target_x, target_y, desired_speed)
 
         # Ensure linear and angular velocities are within limits
         self.v = np.clip(self.v, -self.max_v, self.max_v)
@@ -76,15 +79,15 @@ class Agent(Shape):
         # Update the agent's pose
         if self.dynamics == "differential":
             # Calculate the new pose
-            delta_s = self.v * dt
-            delta_theta = self.omega * dt
-            self.x += delta_s * np.cos(self.theta + 0.5 * delta_theta)
-            self.y += delta_s * np.sin(self.theta + 0.5 * delta_theta)
-            self.theta += delta_theta
+            self.delta_s = self.v * dt
+            self.delta_theta = self.omega * dt
+            self.x += self.delta_s * np.cos(self.theta + 0.5 * self.delta_theta)
+            self.y += self.delta_s * np.sin(self.theta + 0.5 * self.delta_theta)
+            self.theta += self.delta_theta
         else:
             raise ValueError("Unknown dynamics type: {}".format(self.dynamics))
     
-    def update(self, target_x, target_y, desired_speed, dt):
+    def update(self, target_x, target_y, desired_speed):
         # Calculate the error in position
         error_x = target_x - self.x
         error_y = target_y - self.y

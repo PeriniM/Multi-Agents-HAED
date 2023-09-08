@@ -1,7 +1,7 @@
 import numpy as np
 from filterpy.kalman import ExtendedKalmanFilter
 
-class AgentEKF:
+class EKF:
     def __init__(self, dim_x, dim_z, initial_state):
         self.ekf = ExtendedKalmanFilter(dim_x=dim_x, dim_z=dim_z)
         self.ekf.x = initial_state

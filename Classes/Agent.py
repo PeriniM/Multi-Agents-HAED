@@ -1,6 +1,6 @@
 import numpy as np
 from Classes.Shapes import Shape
-from Classes.AgentEKF import AgentEKF
+from Classes.EKF import EKF
 
 class Agent(Shape):
     def __init__(self, vertex_x, vertex_y):
@@ -58,7 +58,7 @@ class Agent(Shape):
 
     def initialize_ekf(self, initial_state):
         # Initialize the Extended Kalman Filter for the agent
-        self.agentEKF = AgentEKF(dim_x=3, dim_z=3, initial_state=initial_state)
+        self.agentEKF = EKF(dim_x=3, dim_z=3, initial_state=initial_state)
     
     def initialize_ekf_matrices(self, P_val, Q_val, R_val):
         # Initial state covariance. P_val is a 1x3 array

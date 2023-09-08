@@ -77,15 +77,64 @@ class LiDAR(Sensor):
 
     def get_data(self):
         return self.readings
+    
+class VFH:
+    def __init__(self, num_bins, threshold):
+        self.num_bins = num_bins
+        self.threshold = threshold
+        self.histogram = np.zeros(num_bins)
+        
+    def create_histogram(self, lidar):
+        bin_width = len(lidar.readings) // self.num_bins
+        for i in range(self.num_bins):
+            self.histogram[i] = np.min(lidar.readings[i*bin_width:(i+1)*bin_width])
+    
+    def get_target_direction(self, desired_direction):
+        # Threshold the histogram
+        blocked_bins = np.where(self.histogram < self.threshold)[0]
 
-# Test Script starts here
+        # Check if desired direction is free
+        desired_bin = (desired_direction / (2 * np.pi)) * self.num_bins
+        if desired_bin not in blocked_bins:
+            return desired_direction
 
-def plot_lidar_readings(lidar, ax):
+        # Otherwise, find the largest gap
+        gaps = np.diff(blocked_bins)
+        largest_gap_idx = np.argmax(gaps)
+        
+        # Return the center of the largest gap as the new target direction
+        target_bin = (blocked_bins[largest_gap_idx] + blocked_bins[largest_gap_idx + 1]) // 2
+        return (target_bin / self.num_bins) * (2 * np.pi)
+
+class Robot:
+    def __init__(self, x, y, theta):
+        self.x = x
+        self.y = y
+        self.theta = theta
+        self.speed = 1.0
+        
+    def move(self, direction, dt=1):
+        self.x += self.speed * np.cos(direction) * dt
+        self.y += self.speed * np.sin(direction) * dt
+        self.theta = direction
+
+def plot_robot(robot, ax):
+    ax.scatter([robot.x], [robot.y], color='b', marker='o')
+    dx = 1.0 * np.cos(robot.theta)
+    dy = 1.0 * np.sin(robot.theta)
+    ax.arrow(robot.x, robot.y, dx, dy, head_width=0.5, head_length=0.5, fc='blue', ec='blue')
+
+def plot_lidar_readings(lidar, robot, ax):
     for i, distance in enumerate(lidar.readings):
-        angle = lidar.beam_angles[i]
-        x = lidar.x + distance * np.cos(angle)
-        y = lidar.y + distance * np.sin(angle)
-        ax.plot([lidar.x, x], [lidar.y, y], color='r', alpha=0.5)
+        angle = lidar.beam_angles[i] + robot.theta
+        x_end = robot.x + distance * np.cos(angle)
+        y_end = robot.y + distance * np.sin(angle)
+        ax.plot([robot.x, x_end], [robot.y, y_end], color='r', alpha=0.5)
+
+def compute_histogram(lidar):
+    hist_bins = np.linspace(0, 360, lidar.num_beams + 1)  # Create bins for 360 degrees.
+    hist_vals, _ = np.histogram(lidar.beam_angles * (180 / np.pi), bins=hist_bins, weights=1 / lidar.readings)
+    return hist_vals, hist_bins
 
 def main():
     # Define the environment as a list of line segments
@@ -93,27 +142,50 @@ def main():
         [0, 0, 12, 0],  # bottom
         [10, 0, 12, 10],  # right
         [10, 10, 0, 10],  # top
-        [0, 10, 0, 0]   # left
+        [0, 10, 0, 0],   # left
+        [3, 3, 7, 3],    # horizontal obstacle
+        [7, 3, 7, 7],    # vertical obstacle
     ]
 
-    lidar = LiDAR(5, 5, "LiDAR", 15, 360, 360)  # Placing the LiDAR in the center of the environment
+    robot = Robot(5, 1, np.pi/2)  # Initialize robot position and heading direction
+    lidar = LiDAR(robot.x, robot.y, "LiDAR", 15, 360, 360)
+    vfh = VFH(num_bins=36, threshold=2.0)
 
-    # Plot the environment and the LiDAR readings
-    fig, ax = plt.subplots()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 7))
 
-    # Draw environment
-    for segment in ideal_map:
-        ax.plot([segment[0], segment[2]], [segment[1], segment[3]], 'k-')
+    # Plot for several time steps
+    for _ in range(10):
+        # Clear previous data
+        ax1.cla()
+        ax2.cla()
+        
+        # Draw environment
+        for segment in ideal_map:
+            ax1.plot([segment[0], segment[2]], [segment[1], segment[3]], 'k-')
 
-    # Update LiDAR
-    lidar.update(lidar.x, lidar.y, 0, ideal_map)
+        # Update LiDAR
+        lidar.update(robot.x, robot.y, robot.theta, ideal_map)
+        # Plot LiDAR readings
+        plot_lidar_readings(lidar, robot, ax1)
 
-    # Plot LiDAR readings
-    plot_lidar_readings(lidar, ax)
+        # Update and plot VFH histogram
+        vfh.create_histogram(lidar)
+        ax2.bar(np.arange(vfh.num_bins), vfh.histogram, width=1.0)
 
-    ax.set_xlim(-5, 15)
-    ax.set_ylim(-5, 15)
+        # Update robot's direction and move
+        target_direction = vfh.get_target_direction(robot.theta)
+        robot.move(target_direction)
+
+        # Plot robot
+        plot_robot(robot, ax1)
+
+        ax1.set_xlim(-5, 15)
+        ax1.set_ylim(-5, 15)
+        ax2.set_ylim(0, lidar.max_range+1)
+        plt.pause(0.5)  # Wait for a short duration before plotting the next frame
+
     plt.show()
 
 if __name__ == "__main__":
     main()
+

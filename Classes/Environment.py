@@ -34,7 +34,8 @@ class Environment:
         # create variables to save the number of targets and the total number of targets
         self.targetsTotal = 0
         self.targetsReached = 0
-
+        self.lastTarget = False
+        self.lastTargetCoords = None
         # create handles for the figure and axes
         self.fig, self.axes = None, None
         self.limit_axes = None
@@ -257,10 +258,7 @@ class Environment:
                     ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
                     # Plot the agent's orientation using a line
                     ax.plot([agent.x, agent.x + 1 * np.cos(agent.theta)], [agent.y, agent.y + 1 * np.sin(agent.theta)], color='r', alpha=1, linewidth=1)
-                    # Plotting the estimated position of the agent with UWB
-                    # ax.plot(agent.estim_pos_uwb[0], agent.estim_pos_uwb[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
-                    # Plotting the estimated position of the agent with encoders
-                    # ax.plot(agent.estim_pos_encoders[0], agent.estim_pos_encoders[1], color='C' + str(idx), alpha=1, marker='o', markersize=3)
+
                     # Plot LiDAR points around the agent's position
                     lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
                     ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
@@ -277,10 +275,21 @@ class Environment:
                         agent.target_points[1].pop(0)
                         self.targetsReached += 1
                 else:
-                    # plot just the scanned map
+                    if not self.lastTarget:
+                        self.lastTargetCoords = [agent.x, agent.y]
+                        # append the last target point to all the other agents
+                        for agent in self.agents:
+                            agent.target_points[0].append(self.lastTargetCoords[0])
+                            agent.target_points[1].append(self.lastTargetCoords[1])
+
+                        self.lastTarget = True
+                    # plot the scanned map
                     if len(agent.scanned_map) > 0:
                         scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)
                         ax.scatter(scanned_map_x_coords, scanned_map_y_coords, color='C' + str(idx), marker='o', alpha=1, s=0.5)
+                    # plot the agent's position
+                    ax.plot(agent.x, agent.y, color='C' + str(idx), alpha=1, marker='o', markersize=3)
+
             # If window is closed, then stop the simulation
             if not plt.fignum_exists(ax.get_figure().number):
                 return

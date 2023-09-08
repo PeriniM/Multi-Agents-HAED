@@ -2,11 +2,11 @@ from Classes.Environment import Environment
 import matplotlib.pyplot as plt
 import datetime
 
-num_agents = 8
-filename = 'dungeon'
+num_agents = 10
+filename = 'noObstacles'
 env = Environment('Rooms/'+filename+'.csv')
 env.createAgents(num_agents)
-env.createVoronoiTessellation(100)
+env.createVoronoiTessellation(300)
 env.assignRobots()
 env.initializeAgentSensors(['Encoders', 'Magnetometer', 'Lidar', 'StereoCamera'])
 

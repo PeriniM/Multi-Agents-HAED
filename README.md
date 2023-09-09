@@ -6,7 +6,7 @@ This project focuses on simulating a multi-agent system to perform environment m
 ## Installation
 
 ### Requirements
-- [Python 3.8](https://www.python.org/downloads/)
+- +[Python 3.8](https://www.python.org/downloads/)
 
 ### Installation Guide
 #### Ubuntu 20.04
@@ -25,7 +25,7 @@ python -m venv env
 ./env/bin/activate
 pip install -r requirements.txt
 ```
-## [Documentation](https://perinim.github.io/DQN-SwingUp/)
+## [Documentation](https://perinim.github.io/distributed-system-project/)
 
 ## Project Structure
 - 📄[main.py](main.py)

@@ -169,7 +169,7 @@ def compute_tsp_path_for_region(regions):
 
 
 if __name__ == "__main__":
-    filename = 'Rooms/createGrid().csv'
+    filename = 'Rooms/noObstacles.csv'
     shapes = importCSV(filename)
     
     # Extract the room shape
@@ -180,47 +180,56 @@ if __name__ == "__main__":
 
     # Use K-means to split the Voronoi regions among robots
     n_robots = 4  # change this as per your needs
-    robot_assignments = divide_areas_using_kmeans(vor, room_shape, n_robots)
+    robot_assignments1 = divide_areas_using_kmeans(vor, room_shape, 1)
+    robot_assignments2 = divide_areas_using_kmeans(vor, room_shape, 5)
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(nrows=2, ncols=1)
+    fig.tight_layout()
     
-    # Plot the Voronoi cells with different colors for each robot assignment
-    colors = cm.rainbow(np.linspace(0, 1, len(robot_assignments)))
-    for i, regions in enumerate(robot_assignments):
-        for region in regions:
-            # Check if the region is a MultiPolygon
-            if region.geom_type == 'MultiPolygon':
-                for sub_region in region.geoms:
-                    x, y = sub_region.exterior.xy
-                    ax.fill(x, y, color=colors[i], alpha=0.5)
-            else:
-                x, y = region.exterior.xy
-                ax.fill(x, y, color=colors[i], alpha=0.5)
+    # # Plot the Voronoi cells with different colors for each robot assignment
+    colors1 = cm.rainbow(np.linspace(0, 1, len(robot_assignments1)))
+    colors2 = cm.rainbow(np.linspace(0, 1, len(robot_assignments2)))
+    # for i, regions in enumerate(robot_assignments):
+    #     for region in regions:
+    #         # Check if the region is a MultiPolygon
+    #         if region.geom_type == 'MultiPolygon':
+    #             for sub_region in region.geoms:
+    #                 x, y = sub_region.exterior.xy
+    #                 ax.fill(x, y, color=colors[i], alpha=0.5)
+    #         else:
+    #             x, y = region.exterior.xy
+    #             ax.fill(x, y, color=colors[i], alpha=0.5)
     
     # Compute TSP paths for each robot assignment and plot
-    for i, regions in enumerate(robot_assignments):
+    for i, regions in enumerate(robot_assignments1):
         ordered_centroids = compute_tsp_path_for_region(regions)
-        ax.plot(*zip(*ordered_centroids), '-o', color=colors[i], linewidth=2, markersize=5)
-    
-    # Plot the clipped Voronoi ridges
-    for ridge in clipped_ridges:
-        if ridge.geom_type == 'LineString':
-            ax.plot(*ridge.xy, color='k', linewidth=0.5)
-        elif ridge.geom_type == 'MultiLineString':
-            for line in ridge:
-                ax.plot(*line.xy, color='k', linewidth=0.5)
+        ax[0].plot(*zip(*ordered_centroids), '-o', color=colors1[i], linewidth=2, markersize=5, label=f"Robot {i+1}")
+    # Compute TSP paths for each robot assignment and plot
+    for i, regions in enumerate(robot_assignments2):
+        ordered_centroids = compute_tsp_path_for_region(regions)
+        ax[1].plot(*zip(*ordered_centroids), '-o', color=colors2[i], linewidth=2, markersize=5, label=f"Robot {i+1}")
+    # # Plot the clipped Voronoi ridges
+    # for ridge in clipped_ridges:
+    #     if ridge.geom_type == 'LineString':
+    #         ax.plot(*ridge.xy, color='k', linewidth=0.5)
+    #     elif ridge.geom_type == 'MultiLineString':
+    #         for line in ridge:
+    #             ax.plot(*line.xy, color='k', linewidth=0.5)
     
     # Plot room boundary
     room_x = np.append(room_shape[0], room_shape[0][0])
     room_y = np.append(room_shape[1], room_shape[1][0])
-    ax.plot(room_x, room_y, color="k", label="Room")
+    ax[0].plot(room_x, room_y, color="k")
+    ax[1].plot(room_x, room_y, color="k")
     
     # Set the plot limits to show the entire room
-    ax.set_xlim(min(room_x) - 1, max(room_x) + 1)  # Adding/subtracting 1 for a little margin
-    ax.set_ylim(min(room_y) - 1, max(room_y) + 1)
+    ax[1].set_xlim(min(room_x) - 1, max(room_x) + 1)  # Adding/subtracting 1 for a little margin
+    ax[1].set_ylim(min(room_y) - 1, max(room_y) + 1)
     
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_title('Voronoi Tessellation with K-means Robot Assignments and TSP Paths')
+    ax[1].set_xlabel('X')
+    ax[1].set_ylabel('Y')
+    ax[0].set_title('TSP Paths Comparison')
+    ax[0].legend(loc="upper right")
+    ax[1].legend(loc="upper right")
     
     plt.show()

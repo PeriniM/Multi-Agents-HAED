@@ -9,6 +9,7 @@ import matplotlib.cm as cm
 from sklearn.cluster import KMeans
 from python_tsp.heuristics import solve_tsp_simulated_annealing
 import warnings
+import time
 
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=RuntimeWarning)
@@ -158,38 +159,61 @@ class RobotAssigner:
                         distance *= 1e5
                 distance_matrix[i, j] = distance
         print(f"Computing TSP path for {len(regions)} regions...")
+        start_time = time.time()
         tour, _ = solve_tsp_simulated_annealing(distance_matrix)
-        return tour
+        end_time = time.time()
+        return tour, end_time - start_time
 
     def plot_assignments_and_paths(self):
-        fig, ax = plt.subplots()
+        # fig, ax = plt.subplots()
         colors = cm.rainbow(np.linspace(0, 1, self.n_robots))
+        total_time = 0
         for robot_idx, regions in enumerate(self.robot_assignments):
-            tour = self.compute_tsp_path_for_region(regions)
+            tour, tsp_time = self.compute_tsp_path_for_region(regions)  # Get the time for this robot
+            total_time += tsp_time  # Accumulate the time
             ordered_regions = [regions[i] for i in tour]
             x_vals, y_vals = [], []
             for region in ordered_regions:
                 x, y = region.centroid.coords[0]
                 x_vals.append(x)
                 y_vals.append(y)
-            ax.plot(x_vals, y_vals, marker='o', color=colors[robot_idx], label=f"Robot {robot_idx}")
+            # ax.plot(x_vals, y_vals, marker='o', color=colors[robot_idx], label=f"Robot {robot_idx}")
 
-        ax.set_title('Robot Assignments with TSP Paths')
-        ax.legend()
-        plt.show()
+        # ax.set_title('Robot Assignments with TSP Paths')
+        # ax.legend()
+        # plt.show()
+        return total_time
 
 
 if __name__ == "__main__":
-    # Initializing the RoomMap
     room_map = RoomMap('Rooms/createGrid().csv')
-    room_map.display()
 
-    # Handling Voronoi tessellation
-    voronoi_handler = VoronoiHandler(room_map.room_shape)
-    voronoi_handler.generate_voronoi_within_room(300)
-    voronoi_handler.plot_clipped_ridges()
+    agent_counts = [1, 2, 3, 4, 5]
+    voronoi_points_counts = [50, 100, 150, 200, 250, 300]
 
-    # Assigning regions to robots and plotting
-    robot_assigner = RobotAssigner(voronoi_handler.vor, room_map.room_shape, n_robots=4)
-    robot_assigner.divide_areas_using_kmeans()
-    robot_assigner.plot_assignments_and_paths()
+    results = {}
+
+    for agent_count in agent_counts:
+        times = []
+        for points_count in voronoi_points_counts:
+            voronoi_handler = VoronoiHandler(room_map.room_shape)
+            voronoi_handler.generate_voronoi_within_room(points_count)
+
+            robot_assigner = RobotAssigner(voronoi_handler.vor, room_map.room_shape, n_robots=agent_count)
+            robot_assigner.divide_areas_using_kmeans()
+            total_time = robot_assigner.plot_assignments_and_paths()
+            times.append(total_time)
+
+        results[agent_count] = times
+
+    # Plot the results
+    for agent_count, times in results.items():
+        plt.plot(voronoi_points_counts, times, label=f"{agent_count} Agents")
+
+    plt.xlabel('Number of Voronoi Cells')
+    plt.ylabel('Total TSP Convergence Time (s)')
+    plt.legend()
+    plt.grid(True)
+    plt.title('TSP Convergence Time vs. Voronoi Cells')
+    plt.show()
+

@@ -1,5 +1,5 @@
 # Multi-Agent Hybrid Approach for Environment Discovery
-
+ ![alt text](videos/noObstacles_20230908-053343.gif)
 ## Introduction
 This project focuses on simulating a multi-agent system to perform environment mapping. Agents, equipped with sensors, explore and record their surroundings, considering uncertainties in their readings. 
 

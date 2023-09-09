@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>Classes.Agent API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>Classes.Agent</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import numpy as np
+from Classes.Shapes import Shape
+from Classes.EKF import EKF
+
+class Agent(Shape):
+    &#34;&#34;&#34;
+    A class representing an agent in a distributed system.
+
+    Attributes:
+    - vertex_x (list): A list of x-coordinates of the vertices of the agent&#39;s shape.
+    - vertex_y (list): A list of y-coordinates of the vertices of the agent&#39;s shape.
+    - x (float): The x-coordinate of the center of the agent&#39;s shape.
+    - y (float): The y-coordinate of the center of the agent&#39;s shape.
+    - theta (float): The orientation of the agent&#39;s shape in radians.
+    - v (float): The linear velocity of the agent.
+    - omega (float): The angular velocity of the agent.
+    - max_v (float): The maximum linear velocity of the agent.
+    - max_omega (float): The maximum angular velocity of the agent.
+    - kp (float): The proportional gain of the agent&#39;s controller.
+    - wheels_distance (float): The distance between the wheels of the agent.
+    - wheel_radius (float): The radius of the wheels of the agent.
+    - dynamics (str): The type of dynamics of the agent.
+    - sensors (dict): A dictionary of the agent&#39;s sensors.
+    - agentEKF (ExtendedKalmanFilter): The Extended Kalman Filter used for estimation.
+    - pos_uwb (np.ndarray): The position of the agent as estimated by UWB.
+    - delta_theta_encoders (float): The change in orientation of the agent as estimated by encoders.
+    - delta_s_encoders (float): The change in position of the agent as estimated by encoders.
+    - theta_mag (float): The orientation of the agent as estimated by magnetometer.
+    - delta_s (float): The change in position of the agent.
+    - delta_theta (float): The change in orientation of the agent.
+    - target_points (np.ndarray): The target points of the path to follow.
+    - scanned_map (list): The map scanned by the agent.
+    - reached_final_target (bool): Whether the agent has reached the final target.
+
+    Methods:
+    - getVertices(): Returns the transformed vertices of the agent&#39;s shape.
+    - initialize_sensors(sensors): Initializes the agent&#39;s sensors.
+    - initialize_ekf(initial_state): Initializes the Extended Kalman Filter.
+    - initialize_ekf_matrices(P_val, Q_val, R_val): Initializes the matrices of the Extended Kalman Filter.
+    - move(target_x, target_y, desired_speed, dt): Moves the agent towards a target point.
+    - update(target_x, target_y, desired_speed): Updates the agent&#39;s velocities based on the error in position and angle.
+    - get_sensor_data(sensor_name): Returns the data from a sensor.
+    &#34;&#34;&#34;
+
+    def __init__(self, vertex_x, vertex_y):
+        &#34;&#34;&#34;
+        Initializes an Agent object.
+
+        Args:
+        - vertex_x (list): A list of x-coordinates of the vertices of the agent&#39;s shape.
+        - vertex_y (list): A list of y-coordinates of the vertices of the agent&#39;s shape.
+        &#34;&#34;&#34;
+        super().__init__(vertex_x, vertex_y, element_type=&#34;agent&#34;)
+        self.vertex_x = vertex_x
+        self.vertex_y = vertex_y
+        self.x = np.mean(vertex_x)
+        self.y = np.mean(vertex_y)
+        self.theta = 0
+        self.v = 0
+        self.omega = 0
+
+        # set max speed and angular velocity
+        self.max_v = 5
+        self.max_omega = 5
+        # set PID constants
+        self.kp = 1000
+
+        # set wheels distance as the minimum distance between the middle point and the closest vertex
+        self.wheels_distance = np.min(np.sqrt((self.x - vertex_x)**2 + (self.y - vertex_y)**2))
+        self.wheel_radius = self.wheels_distance / 2
+
+        self.dynamics = &#34;differential&#34;
+        self.sensors = {}
+
+        # Initialize the Extended Kalman Filter for the agent
+        self.agentEKF = None
+
+        # Estimation variables
+        self.pos_uwb = None
+        self.delta_theta_encoders = None
+        self.delta_s_encoders = None
+        self.theta_mag = None
+        self.delta_s = None
+        self.delta_theta = None
+        
+    
+        # Iniitialize the target points of the path to follow 
+        self.target_points = None
+        self.scanned_map = []
+        self.reached_final_target = False
+        self.actual_trajectory = []
+        self.ideal_trajectory = []
+        
+    def getVertices(self):
+        &#34;&#34;&#34;
+        Returns the transformed vertices of the agent&#39;s shape.
+
+        Returns:
+        - np.ndarray: The transformed vertices of the agent&#39;s shape.
+        &#34;&#34;&#34;
+        # return transformed vertices
+        new_vertex_x = self.x + (self.vertex_x - self.x) * np.cos(self.theta) + (self.vertex_y - self.y) * np.sin(self.theta)
+        new_vertex_y = self.y - (self.vertex_x - self.x) * np.sin(self.theta) + (self.vertex_y - self.y) * np.cos(self.theta)
+        return np.array([new_vertex_x, new_vertex_y]).T
+    
+    def initialize_sensors(self, sensors):
+        &#34;&#34;&#34;
+        Initializes the agent&#39;s sensors.
+
+        Args:
+        - sensors (list): A list of Sensor objects.
+        &#34;&#34;&#34;
+        for sensor in sensors:
+            if sensor.sensor_type == &#34;Encoder&#34;:
+                self.sensors[&#34;Encoder_left&#34;] = sensor
+                self.sensors[&#34;Encoder_right&#34;] = sensor
+            else:
+                self.sensors[sensor.sensor_type] = sensor
+
+    def initialize_ekf(self, initial_state):
+        &#34;&#34;&#34;
+        Initializes the Extended Kalman Filter.
+
+        Args:
+        - initial_state (np.ndarray): The initial state of the filter.
+        &#34;&#34;&#34;
+        self.agentEKF = EKF(dim_x=3, dim_z=3, initial_state=initial_state)
+    
+    def initialize_ekf_matrices(self, P_val, Q_val, R_val):
+        &#34;&#34;&#34;
+        Initializes the matrices of the Extended Kalman Filter.
+
+        Args:
+        - P_val (float): The initial state covariance.
+        - Q_val (float): The process noise.
+        - R_val (float): The measurement noise.
+        &#34;&#34;&#34;
+        # Initial state covariance. P_val is a 1x3 array
+        self.agentEKF.ekf.P = np.diag(P_val**2)
+        # Process noise. Q_val is a 1x3 array
+        self.agentEKF.ekf.Q = np.diag(Q_val**2)
+        # Measurement noise. R_val is a 1x3 array
+        self.agentEKF.ekf.R = np.diag(R_val**2)
+
+    def move(self, target_x, target_y, desired_speed, dt):
+        &#34;&#34;&#34;
+        Moves the agent towards a target point.
+
+        Args:
+        - target_x (float): The x-coordinate of the target point.
+        - target_y (float): The y-coordinate of the target point.
+        - desired_speed (float): The desired speed of the agent.
+        - dt (float): The time step.
+
+        Returns:
+        - None
+        &#34;&#34;&#34;
+        # Use the proportional controller to update velocities
+        self.update(target_x, target_y, desired_speed)
+
+        # Ensure linear and angular velocities are within limits
+        self.v = np.clip(self.v, -self.max_v, self.max_v)
+        self.omega = np.clip(self.omega, -self.max_omega, self.max_omega)
+        
+        # Update the agent&#39;s pose
+        if self.dynamics == &#34;differential&#34;:
+            # Calculate the new pose
+            self.delta_s = self.v * dt
+            self.delta_theta = self.omega * dt
+            self.x += self.delta_s * np.cos(self.theta + 0.5 * self.delta_theta)
+            self.y += self.delta_s * np.sin(self.theta + 0.5 * self.delta_theta)
+            self.theta += self.delta_theta
+        else:
+            raise ValueError(&#34;Unknown dynamics type: {}&#34;.format(self.dynamics))
+    
+    def update(self, target_x, target_y, desired_speed):
+        &#34;&#34;&#34;
+        Updates the agent&#39;s velocities based on the error in position and angle.
+
+        Args:
+        - target_x (float): The x-coordinate of the target point.
+        - target_y (float): The y-coordinate of the target point.
+        - desired_speed (float): The desired speed of the agent.
+
+        Returns:
+        - None
+        &#34;&#34;&#34;
+        # Calculate the error in position
+        error_x = target_x - self.x
+        error_y = target_y - self.y
+
+        # Calculate the distance to the target
+        dist_to_target = np.sqrt(error_x**2 + error_y**2)
+
+        # Calculate the desired velocity based on the error
+        desired_velocity = self.kp * dist_to_target
+
+        # Calculate the angle to the target
+        target_angle = np.arctan2(error_y, error_x)
+
+        # Calculate the error in angle
+        error_angle = target_angle - self.theta
+
+        # Ensure the error_angle is within the range [-pi, pi]
+        if error_angle &gt; np.pi:
+            error_angle -= 2 * np.pi
+        elif error_angle &lt; -np.pi:
+            error_angle += 2 * np.pi
+
+        # Calculate the desired angular velocity based on the angle error
+        desired_angular_velocity = self.kp * error_angle
+
+        # Set the desired linear and angular velocities
+        self.v = desired_velocity
+        self.omega = desired_angular_velocity
+
+        # Limit the linear velocity to the desired speed
+        if self.v &gt; desired_speed:
+            self.v = desired_speed
+
+    def get_sensor_data(self, sensor_name):
+        &#34;&#34;&#34;
+        Returns the data from a sensor.
+
+        Args:
+        - sensor_name (str): The name of the sensor.
+
+        Returns:
+        - float: The data from the sensor.
+        &#34;&#34;&#34;
+        return self.sensors[sensor_name].get_data()
+        </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="Classes.Agent.Agent"><code class="flex name class">
+<span>class <span class="ident">Agent</span></span>
+<span>(</span><span>vertex_x, vertex_y)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A class representing an agent in a distributed system.</p>
+<p>Attributes:
+- vertex_x (list): A list of x-coordinates of the vertices of the agent's shape.
+- vertex_y (list): A list of y-coordinates of the vertices of the agent's shape.
+- x (float): The x-coordinate of the center of the agent's shape.
+- y (float): The y-coordinate of the center of the agent's shape.
+- theta (float): The orientation of the agent's shape in radians.
+- v (float): The linear velocity of the agent.
+- omega (float): The angular velocity of the agent.
+- max_v (float): The maximum linear velocity of the agent.
+- max_omega (float): The maximum angular velocity of the agent.
+- kp (float): The proportional gain of the agent's controller.
+- wheels_distance (float): The distance between the wheels of the agent.
+- wheel_radius (float): The radius of the wheels of the agent.
+- dynamics (str): The type of dynamics of the agent.
+- sensors (dict): A dictionary of the agent's sensors.
+- agentEKF (ExtendedKalmanFilter): The Extended Kalman Filter used for estimation.
+- pos_uwb (np.ndarray): The position of the agent as estimated by UWB.
+- delta_theta_encoders (float): The change in orientation of the agent as estimated by encoders.
+- delta_s_encoders (float): The change in position of the agent as estimated by encoders.
+- theta_mag (float): The orientation of the agent as estimated by magnetometer.
+- delta_s (float): The change in position of the agent.
+- delta_theta (float): The change in orientation of the agent.
+- target_points (np.ndarray): The target points of the path to follow.
+- scanned_map (list): The map scanned by the agent.
+- reached_final_target (bool): Whether the agent has reached the final target.</p>
+<p>Methods:
+- getVertices(): Returns the transformed vertices of the agent's shape.
+- initialize_sensors(sensors): Initializes the agent's sensors.
+- initialize_ekf(initial_state): Initializes the Extended Kalman Filter.
+- initialize_ekf_matrices(P_val, Q_val, R_val): Initializes the matrices of the Extended Kalman Filter.
+- move(target_x, target_y, desired_speed, dt): Moves the agent towards a target point.
+- update(target_x, target_y, desired_speed): Updates the agent's velocities based on the error in position and angle.
+- get_sensor_data(sensor_name): Returns the data from a sensor.</p>
+<p>Initializes an Agent object.</p>
+<p>Args:
+- vertex_x (list): A list of x-coordinates of the vertices of the agent's shape.
+- vertex_y (list): A list of y-coordinates of the vertices of the agent's shape.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Agent(Shape):
+    &#34;&#34;&#34;
+    A class representing an agent in a distributed system.
+
+    Attributes:
+    - vertex_x (list): A list of x-coordinates of the vertices of the agent&#39;s shape.
+    - vertex_y (list): A list of y-coordinates of the vertices of the agent&#39;s shape.
+    - x (float): The x-coordinate of the center of the agent&#39;s shape.
+    - y (float): The y-coordinate of the center of the agent&#39;s shape.
+    - theta (float): The orientation of the agent&#39;s shape in radians.
+    - v (float): The linear velocity of the agent.
+    - omega (float): The angular velocity of the agent.
+    - max_v (float): The maximum linear velocity of the agent.
+    - max_omega (float): The maximum angular velocity of the agent.
+    - kp (float): The proportional gain of the agent&#39;s controller.
+    - wheels_distance (float): The distance between the wheels of the agent.
+    - wheel_radius (float): The radius of the wheels of the agent.
+    - dynamics (str): The type of dynamics of the agent.
+    - sensors (dict): A dictionary of the agent&#39;s sensors.
+    - agentEKF (ExtendedKalmanFilter): The Extended Kalman Filter used for estimation.
+    - pos_uwb (np.ndarray): The position of the agent as estimated by UWB.
+    - delta_theta_encoders (float): The change in orientation of the agent as estimated by encoders.
+    - delta_s_encoders (float): The change in position of the agent as estimated by encoders.
+    - theta_mag (float): The orientation of the agent as estimated by magnetometer.
+    - delta_s (float): The change in position of the agent.
+    - delta_theta (float): The change in orientation of the agent.
+    - target_points (np.ndarray): The target points of the path to follow.
+    - scanned_map (list): The map scanned by the agent.
+    - reached_final_target (bool): Whether the agent has reached the final target.
+
+    Methods:
+    - getVertices(): Returns the transformed vertices of the agent&#39;s shape.
+    - initialize_sensors(sensors): Initializes the agent&#39;s sensors.
+    - initialize_ekf(initial_state): Initializes the Extended Kalman Filter.
+    - initialize_ekf_matrices(P_val, Q_val, R_val): Initializes the matrices of the Extended Kalman Filter.
+    - move(target_x, target_y, desired_speed, dt): Moves the agent towards a target point.
+    - update(target_x, target_y, desired_speed): Updates the agent&#39;s velocities based on the error in position and angle.
+    - get_sensor_data(sensor_name): Returns the data from a sensor.
+    &#34;&#34;&#34;
+
+    def __init__(self, vertex_x, vertex_y):
+        &#34;&#34;&#34;
+        Initializes an Agent object.
+
+        Args:
+        - vertex_x (list): A list of x-coordinates of the vertices of the agent&#39;s shape.
+        - vertex_y (list): A list of y-coordinates of the vertices of the agent&#39;s shape.
+        &#34;&#34;&#34;
+        super().__init__(vertex_x, vertex_y, element_type=&#34;agent&#34;)
+        self.vertex_x = vertex_x
+        self.vertex_y = vertex_y
+        self.x = np.mean(vertex_x)
+        self.y = np.mean(vertex_y)
+        self.theta = 0
+        self.v = 0
+        self.omega = 0
+
+        # set max speed and angular velocity
+        self.max_v = 5
+        self.max_omega = 5
+        # set PID constants
+        self.kp = 1000
+
+        # set wheels distance as the minimum distance between the middle point and the closest vertex
+        self.wheels_distance = np.min(np.sqrt((self.x - vertex_x)**2 + (self.y - vertex_y)**2))
+        self.wheel_radius = self.wheels_distance / 2
+
+        self.dynamics = &#34;differential&#34;
+        self.sensors = {}
+
+        # Initialize the Extended Kalman Filter for the agent
+        self.agentEKF = None
+
+        # Estimation variables
+        self.pos_uwb = None
+        self.delta_theta_encoders = None
+        self.delta_s_encoders = None
+        self.theta_mag = None
+        self.delta_s = None
+        self.delta_theta = None
+        
+    
+        # Iniitialize the target points of the path to follow 
+        self.target_points = None
+        self.scanned_map = []
+        self.reached_final_target = False
+        self.actual_trajectory = []
+        self.ideal_trajectory = []
+        
+    def getVertices(self):
+        &#34;&#34;&#34;
+        Returns the transformed vertices of the agent&#39;s shape.
+
+        Returns:
+        - np.ndarray: The transformed vertices of the agent&#39;s shape.
+        &#34;&#34;&#34;
+        # return transformed vertices
+        new_vertex_x = self.x + (self.vertex_x - self.x) * np.cos(self.theta) + (self.vertex_y - self.y) * np.sin(self.theta)
+        new_vertex_y = self.y - (self.vertex_x - self.x) * np.sin(self.theta) + (self.vertex_y - self.y) * np.cos(self.theta)
+        return np.array([new_vertex_x, new_vertex_y]).T
+    
+    def initialize_sensors(self, sensors):
+        &#34;&#34;&#34;
+        Initializes the agent&#39;s sensors.
+
+        Args:
+        - sensors (list): A list of Sensor objects.
+        &#34;&#34;&#34;
+        for sensor in sensors:
+            if sensor.sensor_type == &#34;Encoder&#34;:
+                self.sensors[&#34;Encoder_left&#34;] = sensor
+                self.sensors[&#34;Encoder_right&#34;] = sensor
+            else:
+                self.sensors[sensor.sensor_type] = sensor
+
+    def initialize_ekf(self, initial_state):
+        &#34;&#34;&#34;
+        Initializes the Extended Kalman Filter.
+
+        Args:
+        - initial_state (np.ndarray): The initial state of the filter.
+        &#34;&#34;&#34;
+        self.agentEKF = EKF(dim_x=3, dim_z=3, initial_state=initial_state)
+    
+    def initialize_ekf_matrices(self, P_val, Q_val, R_val):
+        &#34;&#34;&#34;
+        Initializes the matrices of the Extended Kalman Filter.
+
+        Args:
+        - P_val (float): The initial state covariance.
+        - Q_val (float): The process noise.
+        - R_val (float): The measurement noise.
+        &#34;&#34;&#34;
+        # Initial state covariance. P_val is a 1x3 array
+        self.agentEKF.ekf.P = np.diag(P_val**2)
+        # Process noise. Q_val is a 1x3 array
+        self.agentEKF.ekf.Q = np.diag(Q_val**2)
+        # Measurement noise. R_val is a 1x3 array
+        self.agentEKF.ekf.R = np.diag(R_val**2)
+
+    def move(self, target_x, target_y, desired_speed, dt):
+        &#34;&#34;&#34;
+        Moves the agent towards a target point.
+
+        Args:
+        - target_x (float): The x-coordinate of the target point.
+        - target_y (float): The y-coordinate of the target point.
+        - desired_speed (float): The desired speed of the agent.
+        - dt (float): The time step.
+
+        Returns:
+        - None
+        &#34;&#34;&#34;
+        # Use the proportional controller to update velocities
+        self.update(target_x, target_y, desired_speed)
+
+        # Ensure linear and angular velocities are within limits
+        self.v = np.clip(self.v, -self.max_v, self.max_v)
+        self.omega = np.clip(self.omega, -self.max_omega, self.max_omega)
+        
+        # Update the agent&#39;s pose
+        if self.dynamics == &#34;differential&#34;:
+            # Calculate the new pose
+            self.delta_s = self.v * dt
+            self.delta_theta = self.omega * dt
+            self.x += self.delta_s * np.cos(self.theta + 0.5 * self.delta_theta)
+            self.y += self.delta_s * np.sin(self.theta + 0.5 * self.delta_theta)
+            self.theta += self.delta_theta
+        else:
+            raise ValueError(&#34;Unknown dynamics type: {}&#34;.format(self.dynamics))
+    
+    def update(self, target_x, target_y, desired_speed):
+        &#34;&#34;&#34;
+        Updates the agent&#39;s velocities based on the error in position and angle.
+
+        Args:
+        - target_x (float): The x-coordinate of the target point.
+        - target_y (float): The y-coordinate of the target point.
+        - desired_speed (float): The desired speed of the agent.
+
+        Returns:
+        - None
+        &#34;&#34;&#34;
+        # Calculate the error in position
+        error_x = target_x - self.x
+        error_y = target_y - self.y
+
+        # Calculate the distance to the target
+        dist_to_target = np.sqrt(error_x**2 + error_y**2)
+
+        # Calculate the desired velocity based on the error
+        desired_velocity = self.kp * dist_to_target
+
+        # Calculate the angle to the target
+        target_angle = np.arctan2(error_y, error_x)
+
+        # Calculate the error in angle
+        error_angle = target_angle - self.theta
+
+        # Ensure the error_angle is within the range [-pi, pi]
+        if error_angle &gt; np.pi:
+            error_angle -= 2 * np.pi
+        elif error_angle &lt; -np.pi:
+            error_angle += 2 * np.pi
+
+        # Calculate the desired angular velocity based on the angle error
+        desired_angular_velocity = self.kp * error_angle
+
+        # Set the desired linear and angular velocities
+        self.v = desired_velocity
+        self.omega = desired_angular_velocity
+
+        # Limit the linear velocity to the desired speed
+        if self.v &gt; desired_speed:
+            self.v = desired_speed
+
+    def get_sensor_data(self, sensor_name):
+        &#34;&#34;&#34;
+        Returns the data from a sensor.
+
+        Args:
+        - sensor_name (str): The name of the sensor.
+
+        Returns:
+        - float: The data from the sensor.
+        &#34;&#34;&#34;
+        return self.sensors[sensor_name].get_data()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="Classes.Shapes.Shape" href="Shapes.html#Classes.Shapes.Shape">Shape</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="Classes.Agent.Agent.getVertices"><code class="name flex">
+<span>def <span class="ident">getVertices</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the transformed vertices of the agent's shape.</p>
+<p>Returns:
+- np.ndarray: The transformed vertices of the agent's shape.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getVertices(self):
+    &#34;&#34;&#34;
+    Returns the transformed vertices of the agent&#39;s shape.
+
+    Returns:
+    - np.ndarray: The transformed vertices of the agent&#39;s shape.
+    &#34;&#34;&#34;
+    # return transformed vertices
+    new_vertex_x = self.x + (self.vertex_x - self.x) * np.cos(self.theta) + (self.vertex_y - self.y) * np.sin(self.theta)
+    new_vertex_y = self.y - (self.vertex_x - self.x) * np.sin(self.theta) + (self.vertex_y - self.y) * np.cos(self.theta)
+    return np.array([new_vertex_x, new_vertex_y]).T</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.get_sensor_data"><code class="name flex">
+<span>def <span class="ident">get_sensor_data</span></span>(<span>self, sensor_name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the data from a sensor.</p>
+<p>Args:
+- sensor_name (str): The name of the sensor.</p>
+<p>Returns:
+- float: The data from the sensor.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_sensor_data(self, sensor_name):
+    &#34;&#34;&#34;
+    Returns the data from a sensor.
+
+    Args:
+    - sensor_name (str): The name of the sensor.
+
+    Returns:
+    - float: The data from the sensor.
+    &#34;&#34;&#34;
+    return self.sensors[sensor_name].get_data()</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.initialize_ekf"><code class="name flex">
+<span>def <span class="ident">initialize_ekf</span></span>(<span>self, initial_state)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the Extended Kalman Filter.</p>
+<p>Args:
+- initial_state (np.ndarray): The initial state of the filter.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize_ekf(self, initial_state):
+    &#34;&#34;&#34;
+    Initializes the Extended Kalman Filter.
+
+    Args:
+    - initial_state (np.ndarray): The initial state of the filter.
+    &#34;&#34;&#34;
+    self.agentEKF = EKF(dim_x=3, dim_z=3, initial_state=initial_state)</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.initialize_ekf_matrices"><code class="name flex">
+<span>def <span class="ident">initialize_ekf_matrices</span></span>(<span>self, P_val, Q_val, R_val)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the matrices of the Extended Kalman Filter.</p>
+<p>Args:
+- P_val (float): The initial state covariance.
+- Q_val (float): The process noise.
+- R_val (float): The measurement noise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize_ekf_matrices(self, P_val, Q_val, R_val):
+    &#34;&#34;&#34;
+    Initializes the matrices of the Extended Kalman Filter.
+
+    Args:
+    - P_val (float): The initial state covariance.
+    - Q_val (float): The process noise.
+    - R_val (float): The measurement noise.
+    &#34;&#34;&#34;
+    # Initial state covariance. P_val is a 1x3 array
+    self.agentEKF.ekf.P = np.diag(P_val**2)
+    # Process noise. Q_val is a 1x3 array
+    self.agentEKF.ekf.Q = np.diag(Q_val**2)
+    # Measurement noise. R_val is a 1x3 array
+    self.agentEKF.ekf.R = np.diag(R_val**2)</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.initialize_sensors"><code class="name flex">
+<span>def <span class="ident">initialize_sensors</span></span>(<span>self, sensors)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the agent's sensors.</p>
+<p>Args:
+- sensors (list): A list of Sensor objects.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize_sensors(self, sensors):
+    &#34;&#34;&#34;
+    Initializes the agent&#39;s sensors.
+
+    Args:
+    - sensors (list): A list of Sensor objects.
+    &#34;&#34;&#34;
+    for sensor in sensors:
+        if sensor.sensor_type == &#34;Encoder&#34;:
+            self.sensors[&#34;Encoder_left&#34;] = sensor
+            self.sensors[&#34;Encoder_right&#34;] = sensor
+        else:
+            self.sensors[sensor.sensor_type] = sensor</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.move"><code class="name flex">
+<span>def <span class="ident">move</span></span>(<span>self, target_x, target_y, desired_speed, dt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Moves the agent towards a target point.</p>
+<p>Args:
+- target_x (float): The x-coordinate of the target point.
+- target_y (float): The y-coordinate of the target point.
+- desired_speed (float): The desired speed of the agent.
+- dt (float): The time step.</p>
+<p>Returns:
+- None</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def move(self, target_x, target_y, desired_speed, dt):
+    &#34;&#34;&#34;
+    Moves the agent towards a target point.
+
+    Args:
+    - target_x (float): The x-coordinate of the target point.
+    - target_y (float): The y-coordinate of the target point.
+    - desired_speed (float): The desired speed of the agent.
+    - dt (float): The time step.
+
+    Returns:
+    - None
+    &#34;&#34;&#34;
+    # Use the proportional controller to update velocities
+    self.update(target_x, target_y, desired_speed)
+
+    # Ensure linear and angular velocities are within limits
+    self.v = np.clip(self.v, -self.max_v, self.max_v)
+    self.omega = np.clip(self.omega, -self.max_omega, self.max_omega)
+    
+    # Update the agent&#39;s pose
+    if self.dynamics == &#34;differential&#34;:
+        # Calculate the new pose
+        self.delta_s = self.v * dt
+        self.delta_theta = self.omega * dt
+        self.x += self.delta_s * np.cos(self.theta + 0.5 * self.delta_theta)
+        self.y += self.delta_s * np.sin(self.theta + 0.5 * self.delta_theta)
+        self.theta += self.delta_theta
+    else:
+        raise ValueError(&#34;Unknown dynamics type: {}&#34;.format(self.dynamics))</code></pre>
+</details>
+</dd>
+<dt id="Classes.Agent.Agent.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self, target_x, target_y, desired_speed)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Updates the agent's velocities based on the error in position and angle.</p>
+<p>Args:
+- target_x (float): The x-coordinate of the target point.
+- target_y (float): The y-coordinate of the target point.
+- desired_speed (float): The desired speed of the agent.</p>
+<p>Returns:
+- None</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self, target_x, target_y, desired_speed):
+    &#34;&#34;&#34;
+    Updates the agent&#39;s velocities based on the error in position and angle.
+
+    Args:
+    - target_x (float): The x-coordinate of the target point.
+    - target_y (float): The y-coordinate of the target point.
+    - desired_speed (float): The desired speed of the agent.
+
+    Returns:
+    - None
+    &#34;&#34;&#34;
+    # Calculate the error in position
+    error_x = target_x - self.x
+    error_y = target_y - self.y
+
+    # Calculate the distance to the target
+    dist_to_target = np.sqrt(error_x**2 + error_y**2)
+
+    # Calculate the desired velocity based on the error
+    desired_velocity = self.kp * dist_to_target
+
+    # Calculate the angle to the target
+    target_angle = np.arctan2(error_y, error_x)
+
+    # Calculate the error in angle
+    error_angle = target_angle - self.theta
+
+    # Ensure the error_angle is within the range [-pi, pi]
+    if error_angle &gt; np.pi:
+        error_angle -= 2 * np.pi
+    elif error_angle &lt; -np.pi:
+        error_angle += 2 * np.pi
+
+    # Calculate the desired angular velocity based on the angle error
+    desired_angular_velocity = self.kp * error_angle
+
+    # Set the desired linear and angular velocities
+    self.v = desired_velocity
+    self.omega = desired_angular_velocity
+
+    # Limit the linear velocity to the desired speed
+    if self.v &gt; desired_speed:
+        self.v = desired_speed</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="Classes.Shapes.Shape" href="Shapes.html#Classes.Shapes.Shape">Shape</a></b></code>:
+<ul class="hlist">
+<li><code><a title="Classes.Shapes.Shape.getLines" href="Shapes.html#Classes.Shapes.Shape.getLines">getLines</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="Classes" href="index.html">Classes</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="Classes.Agent.Agent" href="#Classes.Agent.Agent">Agent</a></code></h4>
+<ul class="">
+<li><code><a title="Classes.Agent.Agent.getVertices" href="#Classes.Agent.Agent.getVertices">getVertices</a></code></li>
+<li><code><a title="Classes.Agent.Agent.get_sensor_data" href="#Classes.Agent.Agent.get_sensor_data">get_sensor_data</a></code></li>
+<li><code><a title="Classes.Agent.Agent.initialize_ekf" href="#Classes.Agent.Agent.initialize_ekf">initialize_ekf</a></code></li>
+<li><code><a title="Classes.Agent.Agent.initialize_ekf_matrices" href="#Classes.Agent.Agent.initialize_ekf_matrices">initialize_ekf_matrices</a></code></li>
+<li><code><a title="Classes.Agent.Agent.initialize_sensors" href="#Classes.Agent.Agent.initialize_sensors">initialize_sensors</a></code></li>
+<li><code><a title="Classes.Agent.Agent.move" href="#Classes.Agent.Agent.move">move</a></code></li>
+<li><code><a title="Classes.Agent.Agent.update" href="#Classes.Agent.Agent.update">update</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

@@ -6,7 +6,7 @@ This project focuses on simulating a multi-agent system to perform environment m
 ## Installation
 
 ### Requirements
-- +[Python 3.8](https://www.python.org/downloads/)
+- [Python 3.8+](https://www.python.org/downloads/)
 
 ### Installation Guide
 #### Ubuntu 20.04
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 git clone https://github.com/PeriniM/distributed-system-project.git
 cd distributed-system-project
 python -m venv env
-./env/bin/activate
+./env/Scripts/activate
 pip install -r requirements.txt
 ```
 ## [Documentation](https://perinim.github.io/distributed-system-project/)

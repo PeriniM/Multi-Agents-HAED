@@ -88,6 +88,8 @@ class Agent(Shape):
         self.target_points = None
         self.scanned_map = []
         self.reached_final_target = False
+        self.actual_trajectory = []
+        self.ideal_trajectory = []
         
     def getVertices(self):
         """

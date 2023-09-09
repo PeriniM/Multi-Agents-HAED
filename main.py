@@ -6,7 +6,7 @@ num_agents = 4
 filename = 'noObstacles'
 env = Environment('Rooms/'+filename+'.csv')
 env.createAgents(num_agents)
-env.createVoronoiTessellation(100)
+env.createVoronoiTessellation(300)
 env.assignRobots()
 env.initializeAgentSensors(['Encoders', 'Magnetometer', 'Lidar', 'StereoCamera'])
 

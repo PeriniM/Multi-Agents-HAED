@@ -8,7 +8,7 @@ from matplotlib.patches import Polygon
 import imageio
 import io
 import cv2
-
+from copy import deepcopy
 from Classes.Shapes import Room, Obstacle
 from Classes.Agent import Agent
 from Classes.Sensors import UWBAnchor, Encoder, Gyroscope, Accelerometer, Magnetometer, DepthSensor
@@ -77,7 +77,7 @@ class Environment:
         # save video frames
         self.frames = []
         self.dt = None
-
+    
         self.importCSV()
         
     def importCSV(self):
@@ -172,6 +172,7 @@ class Environment:
         # assign the paths to the agents
         for i in range(len(self.agents)):
             self.agents[i].target_points = [self.region_paths[i][0], self.region_paths[i][1]]
+            self.agents[i].ideal_trajectory = deepcopy(self.agents[i].target_points)
             self.targetsTotal += len(self.agents[i].target_points[0])
 
     def createAgents(self, num_agents):
@@ -342,6 +343,8 @@ class Environment:
                         agent.target_points[0].pop(0)
                         agent.target_points[1].pop(0)
                         self.targetsReached += 1
+
+                    agent.actual_trajectory.append([agent.x, agent.y])
                 else:
                     if not agent.reached_final_target:
                         if len(self.available_agents) < self.lastTargetGroups:
@@ -357,7 +360,8 @@ class Environment:
                     
                     # if all agents have reached the last target, stop the simulation
                     if self.available_agent_index == int(self.lastTargetGroups):
-                        #self.save_video(videoName, videoSpeed)
+                        if saveVideo:
+                            self.save_video(videoName, videoSpeed)
                         return
 
                     # plot the scanned map

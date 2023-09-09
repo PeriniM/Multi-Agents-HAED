@@ -2,11 +2,11 @@ from Classes.Environment import Environment
 import matplotlib.pyplot as plt
 import datetime
 
-num_agents = 14
-filename = 'createGrid()'
+num_agents = 4
+filename = 'noObstacles'
 env = Environment('Rooms/'+filename+'.csv')
 env.createAgents(num_agents)
-env.createVoronoiTessellation(150)
+env.createVoronoiTessellation(100)
 env.assignRobots()
 env.initializeAgentSensors(['Encoders', 'Magnetometer', 'Lidar', 'StereoCamera'])
 
@@ -25,4 +25,4 @@ env.plotAgentAssignmentsAndPaths(axes[1, 0])
 video_name = 'videos/'+filename+'_'+datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # start the simulation
-env.simulate(axes[1, 1], dt=0.1, saveVideo=True, videoName=video_name, videoSpeed=1.0)
+env.simulate(axes[1, 1], dt=0.1, saveVideo=False, videoName=video_name, videoSpeed=1.0)

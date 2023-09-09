@@ -331,8 +331,8 @@ class Environment:
                     lidar_x_coords, lidar_y_coords = zip(*lidar_cartesian)
                     ax.scatter(lidar_x_coords, lidar_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
                     # Plot stereo camera points around the agent's position
-                    # stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
-                    # ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
+                    stereo_camera_x_coords, stereo_camera_y_coords = zip(*stereo_camera_cartesian)
+                    ax.scatter(stereo_camera_x_coords, stereo_camera_y_coords, color='C' + str(idx), marker='o', alpha=0.5, s=0.5)
                     # Plot the scanned map
                     if len(agent.scanned_map) > 0:
                         scanned_map_x_coords, scanned_map_y_coords = zip(*agent.scanned_map)
@@ -357,7 +357,7 @@ class Environment:
                     
                     # if all agents have reached the last target, stop the simulation
                     if self.available_agent_index == int(self.lastTargetGroups):
-                        self.save_video(videoName, videoSpeed)
+                        #self.save_video(videoName, videoSpeed)
                         return
 
                     # plot the scanned map

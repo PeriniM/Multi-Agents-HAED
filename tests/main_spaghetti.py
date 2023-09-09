@@ -112,7 +112,7 @@ def lidar_scan(estim_pos, estim_orientation, real_map_vert, resolution=100, max_
         
 
 # Import the CSV containing the shapes
-df = pd.read_csv('Rooms/dungeon.csv', header=None, skiprows=1, na_values=['NA', 'na'])
+df = pd.read_csv('Rooms/noObstacles.csv', header=None, skiprows=1, na_values=['NA', 'na'])
 shape = []
 x_max = -1e5
 y_max = -1e5
@@ -211,7 +211,7 @@ y_CoM = agent_vert[0][2][1]
 theta = np.random.rand() * 2 * np.pi
 
 # Define the maximum speed and angular velocity of the agent
-max_speed = 100  # meters per second
+max_speed = 10  # meters per second
 max_angular_velocity = np.pi*10  # radians per second
 
 # Define the time step for the simulation
@@ -235,9 +235,7 @@ ax2.grid(True, which='both', linestyle='dotted')
 for i in range(len(map_real_vert)):
     # plot the real map closing the polygon
     ax1.plot(np.append(map_real_vert[i][0], map_real_vert[i][0][0]), np.append(map_real_vert[i][1], map_real_vert[i][1][0]), 'k', linewidth=1)
-    # for each element of the map, append the last point to close the polygon
-    map_real_vert[i][0] = np.append(map_real_vert[i][0], map_real_vert[i][0][0])
-    map_real_vert[i][1] = np.append(map_real_vert[i][1], map_real_vert[i][1][0]) 
+    
     
 # Add the anchors to the plot
 for i in range(len(anchors)):
@@ -252,7 +250,7 @@ ax1.add_patch(h_agent)
 h_CoM, = ax1.plot(x_CoM, y_CoM, 'o', markersize=3, markerfacecolor='r', markeredgecolor='r')
 
 # Plot the estimated center of mass connections to anchors
-h_CoM_estim = [ax2.plot([], [], 'r')[0] for _ in anchors]
+h_CoM_estim = [ax1.plot([], [], 'r', alpha=0.5)[0] for _ in anchors]
 h_CoM_estim_point, = ax2.plot([], [], 'ro')
 # ones vector for the weights of the cost function
 estimate_weights = np.ones(len(anchors))
@@ -355,8 +353,8 @@ while True:
     h_CoM.set_data([x_CoM], [y_CoM])  # Wrap x_CoM and y_CoM with lists
 
     # Update the graphics connecting the robot's estimated position to all the anchors
-    # for i in range(len(anchors)):
-    #     h_CoM_estim[i].set_data([CoM_estim[0], anchors[i][0]], [CoM_estim[1], anchors[i][1]])
+    for i in range(len(anchors)):
+        h_CoM_estim[i].set_data([CoM_estim[0], anchors[i][0]], [CoM_estim[1], anchors[i][1]])
     # Update the graphics object for the robot's estimated position
     h_CoM_estim_point.set_data([CoM_estim[0]], [CoM_estim[1]])
     # Update the graphics object for the robot's real north

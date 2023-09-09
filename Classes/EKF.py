@@ -38,9 +38,21 @@ class EKF:
         x_next[0] += delta_s * np.cos(theta + 0.5 * delta_theta)
         x_next[1] += delta_s * np.sin(theta + 0.5 * delta_theta)
         x_next[2] += delta_theta
-        x_next[2] = x_next[2] % (2 * np.pi)  # Normalize theta to [0, 2*pi]
         return x_next
-
+    
+    def _compute_jacobian(self, x, u):
+        """
+        Computes the Jacobian matrix A based on the state and control inputs.
+        """
+        delta_s = u[0]
+        theta = x[2]
+        A = np.array([
+            [1, 0, -delta_s * np.sin(theta)],
+            [0, 1, delta_s * np.cos(theta)],
+            [0, 0, 1]
+        ])
+        return A
+    
     def predict(self, u):
         """
         Predicts the next state of the system given the control inputs.
@@ -52,6 +64,10 @@ class EKF:
         None.
         """
         self.ekf.x = self._state_transition(self.ekf.x, u)
+        A = self._compute_jacobian(self.ekf.x, u)
+        
+        # Propagate the covariance
+        self.ekf.P = A @ self.ekf.P @ A.T + self.ekf.Q
 
     def update(self, z):
         """

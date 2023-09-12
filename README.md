@@ -11,7 +11,7 @@ This project focuses on simulating a multi-agent system to perform environment m
 ### Installation Guide
 #### Ubuntu 20.04
 ```bash
-git clone https://github.com/PeriniM/distributed-system-project.git
+git clone https://github.com/PeriniM/Multi-Agents-HAED.git
 cd distributed-system-project
 python -m venv env
 source env/bin/activate
@@ -19,13 +19,13 @@ pip install -r requirements.txt
 ```
 #### Windows
 ```bash
-git clone https://github.com/PeriniM/distributed-system-project.git
+git clone https://github.com/PeriniM/Multi-Agents-HAED.git
 cd distributed-system-project
 python -m venv env
 ./env/Scripts/activate
 pip install -r requirements.txt
 ```
-## [Documentation](https://perinim.github.io/distributed-system-project/)
+## [Documentation](https://perinim.github.io/Multi-Agents-HAED/)
 
 ## Project Structure
 - 📄[main.py](main.py)
